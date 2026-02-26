@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Container Rush</title>
+    <!-- Tailwind CSS pour le style -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React pour l'interface -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel pour lire le code JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-slate-950">
+    <div id="root"></div>
+
+    <script type="text/babel" data-type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+        const { useState, useEffect } = React;
+
+        // ⚠️ ÉTAPE 2 : REMPLACEZ LA LIGNE CI-DESSOUS PAR VOTRE CODE FIREBASE ⚠️
+        const firebaseConfig = {
+  apiKey: "AIzaSyBkI615UzSjgiC8Kfih3Jh1p7DrOjisldg",
+  authDomain: "container-rush.firebaseapp.com", 
+        
+        // --- CONNEXION BASE DE DONNÉES ---
+        const appId = 'container-rush-public';
+        let app, auth, db;
+        
+        if (firebaseConfig) {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        }
+
+        // --- CONFIGURATION ET DONNÉES DU JEU ---
+        const BLOCK_TYPES = {
+          L:   { id: 'L',   label: 'L',   name: 'Léger',    style: { backgroundColor: '#f8fafc', color: '#0f172a', borderColor: '#cbd5e1' }, points: 1 },
+          M:   { id: 'M',   label: 'M',   name: 'Moyen',    style: { backgroundColor: '#94a3b8', color: '#0f172a', borderColor: '#475569' }, points: 2 },
+          H:   { id: 'H',   label: 'H',   name: 'Lourd',    style: { backgroundColor: '#1e293b', color: '#f8fafc', borderColor: '#000000' }, points: 1 },
+          R:   { id: 'R',   label: 'R',   name: 'Reefer',   style: { backgroundColor: '#06b6d4', color: '#0f172a', borderColor: '#164e63' }, points: 3 },
+          HAZ: { id: 'HAZ', label: 'HAZ', name: 'Hazard',   style: { background: 'repeating-linear-gradient(45deg, #f97316, #f97316 6px, #1e293b 6px, #1e293b 12px)', color: 'white', borderColor: '#f97316' }, points: 4 },
+          TW:  { id: 'TW',  label: 'TW',  name: 'Twin',     style: { backgroundColor: '#22c55e', color: 'white', borderColor: '#14532d' }, points: 5 },
+        };
+
+        const BAYS_DATABASE = [
+          { name: "B01: Standard", layout: [['L','L','L','L'], ['M','M','M'], ['H','M','H'], ['H','H']] },
+          { name: "B02: Frigo Cale", layout: [['L','L','L','L'], ['M','R','M'], ['H','R','H'], ['H','H']] },
+          { name: "B03: Noyau Toxique", layout: [['L','L','L','L'], ['M','M','M'], ['H','HAZ','H'], ['H','TW']] },
+          { name: "B04: Base Lourde", layout: [['L','M','M','L'], ['M','M','M'], ['H','H','H'], ['H','H']] },
+          { name: "B05: Cale Mixte", layout: [['L','M','M','L'], ['M','HAZ','M'], ['H','R','H'], ['H','TW']] }
+        ];
+
+        const DECKS_DATABASE = [
+          { name: "D01: Pyramide", layout: [[null, null, 'L', null, null], [null, 'M', 'M', 'M', null], ['H', 'R', 'M', 'R', 'H'], ['H', 'H', 'TW', 'H', 'H']] },
+          { name: "D02: Deux Tours", layout: [['L', null, null, null, 'L'], ['M', null, 'M', null, 'M'], ['M', 'M', 'HAZ', 'M', 'M'], ['H', 'H', 'TW', 'H', 'H']] },
+          { name: "D03: Plateau Plat", layout: [[null, 'L', 'L', 'L', null], [null, 'M', 'M', 'M', null], ['M', 'R', 'M', 'R', 'M'], ['H', 'H', 'H', 'H', 'H']] },
+          { name: "D04: Le Bastion", layout: [[null, null, null, null, null], [null, 'L', 'L', 'L', null], ['M', 'R', 'H', 'R', 'M'], ['H', 'H', 'TW', 'H', 'H']] },
+          { name: "D05: Bloc HAZ", layout: [[null, null, 'L', null, null], [null, 'L', 'HAZ', 'L', null], ['M', 'M', 'M', 'M', 'M'], ['H', 'H', 'TW', 'H', 'H']] }
+        ];
+
+        const enrichLayout = (layout) => {
+          let currentIndex = 0;
+          const enriched = layout.map(row => row.map(() => null));
+          for (let r = layout.length - 1; r >= 0; r--) {
+            for (let c = 0; c < layout[r].length; c++) {
+              if (layout[r][c] !== null) {
+                enriched[r][c] = { type: layout[r][c], linearIndex: currentIndex };
+                currentIndex++;
+              }
+            }
+          }
+          return { enriched, total: currentIndex };
+        };
+
+        const generateInitialCour = () => {
+          const pool = [
+            ...Array(24).fill('L'), ...Array(36).fill('M'), ...Array(36).fill('H'),
+            ...Array(12).fill('R'), ...Array(6).fill('HAZ'), ...Array(6).fill('TW'),
+          ];
+          for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+          }
+          const cour = [];
+          let index = 0;
+          for (let p = 0; p < 10; p++) {
+            const pile = [];
+            for (let c = 0; c < 4; c++) {
+              const col = [];
+              for (let b = 0; b < 3; b++) { col.push(pool[index]); index++; }
+              pile.push(col);
+            }
+            cour.push(pile);
+          }
+          return cour;
+        };
+
+        const getRandomCranes = () => {
+          const shuffledBays = [...BAYS_DATABASE].sort(() => 0.5 - Math.random());
+          const shuffledDecks = [...DECKS_DATABASE].sort(() => 0.5 - Math.random());
+          const cranes = [];
+          for (let i = 0; i < 3; i++) {
+              cranes.push({
+                  id: i + 1,
+                  name: `GRUE ${i + 1}`,
+                  bayName: shuffledBays[i].name,
+                  deckName: shuffledDecks[i].name,
+                  bayData: enrichLayout(shuffledBays[i].layout),
+                  deckData: enrichLayout(shuffledDecks[i].layout),
+                  phase: 'bay',
+                  progress: 0,
+              });
+          }
+          return cranes;
+        };
+
+        const generateRoomCode = () => {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for(let i=0; i<5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+            return code;
+        };
+
+        // --- COMPOSANTS DE RENDU ---
+        const BlockTile = ({ blockId, isSelected, status }) => {
+          if (!blockId) return <div className="w-7 h-7 m-[1px]"></div>;
+          const b = BLOCK_TYPES[blockId];
+          let classes = "w-7 h-7 rounded-sm border-2 flex items-center justify-center font-black shadow-md m-[1px] relative transition-all duration-300 ";
+          let textClass = (b.label === 'HAZ' || b.label === 'TW') ? 'text-[8px] tracking-tighter' : 'text-[11px]';
+
+          if (isSelected) classes += " transform -translate-y-1 ring-2 ring-yellow-400 shadow-[0_5px_10px_rgba(250,204,21,0.5)] z-20";
+          if (status === 'done') classes += " opacity-20 grayscale scale-95 border-dashed";
+          if (status === 'current') classes += " ring-2 ring-yellow-400 ring-offset-1 ring-offset-slate-900 animate-pulse z-10 scale-110 shadow-lg";
+          if (status === 'upcoming') classes += " opacity-90";
+
+          return (
+            <div className={classes} style={b.style} title={b.name}>
+              {status === 'done' ? <span className="text-white text-[10px]">✓</span> : <span className={textClass}>{b.label}</span>}
+            </div>
+          );
+        };
+
+        const MiniMap = ({ layoutData, progress, type, isActive, name }) => {
+          const bgColor = type === 'bay' ? 'bg-slate-900 border-slate-700' : 'bg-blue-900/40 border-blue-800/50';
+          const opacity = isActive ? 'opacity-100' : 'opacity-40';
+          return (
+            <div className={`p-1.5 rounded flex flex-col items-center border ${bgColor} ${opacity} transition-all duration-500 w-full`}>
+              <div className={`text-[9px] mb-1 uppercase tracking-widest font-bold ${type === 'bay' ? 'text-slate-500' : 'text-blue-400'}`}>
+                {name}
+              </div>
+              {layoutData.enriched.map((row, rIdx) => (
+                <div key={rIdx} className="flex justify-center">
+                  {row.map((cell, cIdx) => {
+                    if (!cell) return <div key={cIdx} className="w-7 h-7 m-[1px] border border-dashed border-white/10 rounded-sm"></div>;
+                    let status = 'upcoming';
+                    if (isActive) status = cell.linearIndex < progress ? 'done' : (cell.linearIndex === progress ? 'current' : 'upcoming');
+                    else if (type === 'bay' && !isActive) status = 'done';
+                    return <BlockTile key={cIdx} blockId={cell.type} status={status} />;
+                  })}
+                </div>
+              ))}
+            </div>
+          );
+        };
+
+        // --- APPLICATION PRINCIPALE ---
+        function App() {
+          const [G, setG] = useState(null); 
+          const [user, setUser] = useState(null);
+          const [isAuthLoading, setIsAuthLoading] = useState(true); 
+          const [roomId, setRoomId] = useState(null);
+          const [joinCodeInput, setJoinCodeInput] = useState('');
+          const [mySeat, setMySeat] = useState(0); 
+          const [selected, setSelected] = useState(null);
+          const [localMsg, setLocalMsg] = useState("");
+          const [showRules, setShowRules] = useState(false);
+          const [showNewGameConfirm, setShowNewGameConfirm] = useState(false);
+          const [showMenuConfirm, setShowMenuConfirm] = useState(false);
+
+          const [isAIEnabled, setIsAIEnabled] = useState(false);
+          const [aiDifficulty, setAiDifficulty] = useState('moyen');
+
+          // Init Auth
+          useEffect(() => {
+            if (!auth) {
+                setIsAuthLoading(false);
+                return;
+            }
+            const initAuth = async () => {
+                try {
+                    await signInAnonymously(auth);
+                } catch(e) { 
+                    console.error("Auth init failed:", e); 
+                    setIsAuthLoading(false);
+                }
+            };
+            initAuth();
+            
+            const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+                setUser(currentUser);
+                setIsAuthLoading(false); 
+            });
+            return () => unsubscribe();
+          }, []);
+
+          // Sync Room
+          useEffect(() => {
+              if (!user || !roomId || !db) return;
+              
+              const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
+              
+              const unsubscribe = onSnapshot(docRef, (snap) => {
+                  if (snap.exists()) {
+                      const data = snap.data();
+                      if (data.payload) {
+                          setG(JSON.parse(data.payload));
+                      } else {
+                          setG(data); 
+                      }
+                  } else {
+                      setLocalMsg("La salle a été fermée ou n'existe plus.");
+                      setRoomId(null);
+                  }
+              }, (error) => {
+                  console.error("Firebase Sync Error:", error);
+                  setLocalMsg("Erreur de synchro : " + error.message);
+              });
+              
+              return () => unsubscribe();
+          }, [user, roomId]);
+
+          const createRoom = async () => {
+              if (isAuthLoading) {
+                  setLocalMsg("Veuillez patienter, connexion en cours...");
+                  return;
+              }
+              if (!db || !user) {
+                  setLocalMsg("Connexion au serveur impossible. Mode Hors-Ligne activé.");
+                  startLocalGame();
+                  return;
+              }
+              
+              const code = generateRoomCode();
+              const initialState = createInitialState();
+              initialState.message = "Salle créée. Partagez le code à votre adversaire...";
+              
+              try {
+                  await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), { payload: JSON.stringify(initialState) });
+                  setMySeat(0);
+                  setRoomId(code);
+                  setLocalMsg("");
+              } catch (e) {
+                  console.error(e);
+                  setLocalMsg("Erreur création Firebase : Veuillez vérifier les règles Firestore dans l'étape 2 du guide."); 
+              }
+          };
+
+          const joinExistingRoom = async () => {
+              if (isAuthLoading) {
+                  setLocalMsg("Veuillez patienter, connexion en cours...");
+                  return;
+              }
+              if (!db || !user) return;
+              
+              const code = joinCodeInput.toUpperCase().trim();
+              if (code.length !== 5) {
+                  setLocalMsg("Le code doit faire 5 lettres/chiffres.");
+                  return;
+              }
+              
+              try {
+                  const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code);
+                  const snap = await getDoc(docRef);
+                  if (snap.exists()) {
+                      setMySeat(1);
+                      setRoomId(code);
+                      setLocalMsg("");
+                  } else {
+                      setLocalMsg(`Erreur : Aucune salle trouvée avec le code ${code}.`);
+                  }
+              } catch (e) {
+                  setLocalMsg("Erreur de connexion : " + e.message);
+              }
+          };
+
+          const startLocalGame = () => {
+              setRoomId(null);
+              setG(createInitialState());
+              setMySeat(0);
+          };
+
+          const createInitialState = () => ({
+              cour: generateInitialCour(),
+              cranes: getRandomCranes(),
+              players: [{ id: 1, score: 0 }, { id: 2, score: 0 }],
+              transtainer: 4,
+              stackers: [null, null],
+              currentPlayer: 0,
+              ap: 4,
+              gameStatus: 'playing',
+              message: "Nouvelle partie. C'est à vous de commencer.",
+              history: []
+          });
+
+          const returnToMenu = () => {
+              setG(null);
+              setRoomId(null);
+              setMySeat(0);
+              setLocalMsg("");
+          };
+
+          const handleRestartGame = async () => {
+              if (!canInteract) return;
+              const newState = createInitialState();
+              newState.message = "La partie a été réinitialisée par " + (mySeat === 0 ? "Joueur 1 (Bleu)." : "Joueur 2 (Rouge).");
+              
+              if (roomId && db && user) {
+                  try {
+                      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), { payload: JSON.stringify(newState) });
+                  } catch(e) {
+                      setLocalMsg("Erreur réinitialisation : " + e.message);
+                  }
+              } else {
+                  setG(newState);
+              }
+              setSelected(null);
+          };
+
+          const mutateG = async (mutatorFn) => {
+              if (!G) return;
+              const newG = JSON.parse(JSON.stringify(G));
+              
+              const historySnapshot = JSON.parse(JSON.stringify(G));
+              delete historySnapshot.history;
+              newG.history = newG.history || [];
+              newG.history.push(historySnapshot);
+              if (newG.history.length > 5) newG.history.shift(); 
+
+              mutatorFn(newG);
+              
+              setG(newG);
+              if (roomId && db && user) {
+                  try {
+                      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), { payload: JSON.stringify(newG) });
+                  } catch(e) {
+                      setLocalMsg("Erreur sauvegarde : " + e.message);
+                  }
+              }
+          };
+
+          const isMyTurn = G?.currentPlayer === mySeat;
+          const canInteract = G?.gameStatus === 'playing' && (!roomId || isMyTurn);
+
+          const getFirstAvailCol = (pile) => { for(let c=0; c<4; c++) if(pile[c].length > 0) return c; return -1; };
+          const getFirstNonFullCol = (pile) => { for(let c=0; c<4; c++) if(pile[c].length < 3) return c; return -1; };
+
+          const getCurrentRequirement = (crane) => {
+            if (crane.phase === 'done') return null;
+            const data = crane.phase === 'bay' ? crane.bayData : crane.deckData;
+            for (let r = 0; r < data.enriched.length; r++) {
+              for (let c = 0; c < data.enriched[r].length; c++) {
+                const cell = data.enriched[r][c];
+                if (cell && cell.linearIndex === crane.progress) return cell.type;
+              }
+            }
+            return null;
+          };
+
+          // --- IA (Cachée dans le code public pour simplifier) ---
+          const executeAITurn = () => {
+            if (!G) return;
+            let requirements = [];
+            G.cranes.forEach((crane, idx) => { if (crane.phase !== 'done') requirements.push({ blockId: getCurrentRequirement(crane), craneIdx: idx }); });
+            let candidates = [];
+            for (let p = 0; p < 10; p++) {
+                for (let c = 0; c < 4; c++) {
+                    if (G.cour[p][c].length > 0) {
+                        let topBlock = G.cour[p][c][G.cour[p][c].length - 1];
+                        let matchingTarget = requirements.find(req => req.blockId === topBlock);
+                        if (matchingTarget) {
+                            if (getFirstAvailCol(G.cour[p]) === c) {
+                                let isBlocked = Math.abs(p - G.transtainer) <= 1;
+                                let moveCost = (G.stackers[1] === p) ? 0 : (G.stackers[1] === null ? 0 : 1);
+                                if (!isBlocked && (moveCost + 1 <= G.ap)) candidates.push({ type: 'POSE', machine: 'S', pIdx: p, cIdx: c, moveCost: moveCost, target: matchingTarget });
+                            }
+                            let tMoveCost = Math.abs(G.transtainer - p);
+                            if (tMoveCost + 1 <= G.ap) candidates.push({ type: 'POSE', machine: 'T', pIdx: p, cIdx: c, moveCost: tMoveCost, target: matchingTarget });
+                        }
+                    }
+                }
+            }
+            if (candidates.length > 0) {
+                if (aiDifficulty === 'facile') candidates.sort(() => 0.5 - Math.random());
+                else if (aiDifficulty === 'difficile') candidates.sort((a, b) => { let aBump = (a.machine === 'S' && G.stackers[0] === a.pIdx) || (a.machine === 'T' && G.stackers[0] !== null && Math.abs(G.stackers[0] - a.pIdx) <= 1) ? 1 : 0; let bBump = (b.machine === 'S' && G.stackers[0] === b.pIdx) || (b.machine === 'T' && G.stackers[0] !== null && Math.abs(G.stackers[0] - b.pIdx) <= 1) ? 1 : 0; if (aBump !== bBump) return bBump - aBump; return a.moveCost - b.moveCost; });
+                else candidates.sort((a, b) => a.moveCost - b.moveCost);
+                applyAIPose(candidates[0]); return;
+            }
+            let shiftCandidates = [];
+            for (let p = 0; p < 10; p++) {
+                for (let c = 0; c < 4; c++) {
+                    if (G.cour[p][c].length > 1) {
+                        let buriedBlock = G.cour[p][c][G.cour[p][c].length - 2];
+                        let matchingTarget = requirements.find(req => req.blockId === buriedBlock);
+                        if (matchingTarget) {
+                            if (getFirstAvailCol(G.cour[p]) === c && Math.abs(p - G.transtainer) > 1) {
+                                let moveCost = (G.stackers[1] === p) ? 0 : (G.stackers[1] === null ? 0 : 1);
+                                let adjPiles = [];
+                                if (p > 0 && getFirstNonFullCol(G.cour[p-1]) !== -1) adjPiles.push(p-1);
+                                if (p < 9 && getFirstNonFullCol(G.cour[p+1]) !== -1) adjPiles.push(p+1);
+                                if (adjPiles.length > 0 && (moveCost + 1 <= G.ap)) shiftCandidates.push({ type: 'SHIFT', machine: 'S', pIdx: p, cIdx: c, targetPIdx: adjPiles[0], moveCost: moveCost });
+                            }
+                            let tMoveCost = Math.abs(G.transtainer - p);
+                            let targetCIdx = -1;
+                            for(let tc=0; tc<4; tc++) { if (tc !== c && G.cour[p][tc].length < 3) targetCIdx = tc; }
+                            if (targetCIdx !== -1 && (tMoveCost + 1 <= G.ap)) shiftCandidates.push({ type: 'SHIFT', machine: 'T', pIdx: p, cIdx: c, targetCIdx: targetCIdx, moveCost: tMoveCost });
+                        }
+                    }
+                }
+            }
+            if (shiftCandidates.length > 0) {
+                if (aiDifficulty === 'facile' && Math.random() > 0.5) { applyAIShift(shiftCandidates[Math.floor(Math.random() * shiftCandidates.length)]); return; }
+                else if (aiDifficulty !== 'facile') { shiftCandidates.sort((a, b) => a.moveCost - b.moveCost); applyAIShift(shiftCandidates[0]); return; }
+            }
+            if (aiDifficulty === 'difficile' && G.ap >= 1 && G.stackers[0] !== null) {
+                let tMoveCost = Math.abs(G.transtainer - G.stackers[0]);
+                if (tMoveCost > 0 && tMoveCost <= G.ap) { applyAITMoveOnly(G.stackers[0], tMoveCost); return; }
+            }
+            if (aiDifficulty !== 'facile' && G.ap >= 2 && G.stackers[1] !== null) applyAISpelo();
+            else mutateG(draft => { draft.ap = 0; });
+          };
+
+          useEffect(() => {
+              if (G && isAIEnabled && G.currentPlayer === 1 && G.gameStatus === 'playing') {
+                  const timer = setTimeout(() => { if (G.ap > 0) executeAITurn(); else endTurn(); }, 1200);
+                  return () => clearTimeout(timer);
+              }
+          }, [G, isAIEnabled, aiDifficulty]);
+
+          const applyAIPose = (move) => {
+              mutateG(draft => {
+                  const blockId = draft.cour[move.pIdx][move.cIdx].pop();
+                  let pointsEarned = BLOCK_TYPES[blockId].points;
+                  const activeCrane = draft.cranes[move.target.craneIdx];
+                  activeCrane.progress += 1;
+                  let msg = "";
+                  const currentTotal = activeCrane.phase === 'bay' ? activeCrane.bayData.total : activeCrane.deckData.total;
+                  let isGameOver = false;
+                  if (activeCrane.progress === currentTotal) {
+                      if (activeCrane.phase === 'bay') { activeCrane.phase = 'deck'; activeCrane.progress = 0; pointsEarned += 5; msg = `🤖 L'IA a scellé la Baie ${move.target.craneIdx + 1} ! (+${pointsEarned} PF)`; } 
+                      else { activeCrane.phase = 'done'; pointsEarned += 10; msg = `🤖 L'IA a terminé le Deck ${move.target.craneIdx + 1} ! (+${pointsEarned} PF)`; if (draft.cranes.filter(c => c.phase === 'done').length >= 2) isGameOver = true; }
+                  } else { msg = `🤖 L'IA a posé un [${BLOCK_TYPES[blockId].name}]. (-${move.moveCost+1} PG)`; }
+                  draft.players[1].score += pointsEarned;
+                  if (move.machine === 'S') { draft.stackers[1] = move.pIdx; if (draft.stackers[0] === move.pIdx) { draft.stackers[0] = null; msg += " Vous êtes expulsé !"; } } 
+                  else { draft.transtainer = move.pIdx; if (draft.stackers[0] !== null && Math.abs(draft.stackers[0] - move.pIdx) <= 1) { draft.stackers[0] = null; msg += " L'Aura T vous expulse !"; } if (draft.stackers[1] !== null && Math.abs(draft.stackers[1] - move.pIdx) <= 1) { draft.stackers[1] = null; } }
+                  draft.ap -= (move.moveCost + 1); draft.message = msg;
+                  if (isGameOver) { draft.gameStatus = 'gameover'; const winner = draft.players[0].score > draft.players[1].score ? "Vous avez gagné" : "L'IA gagne"; draft.message = `🚨 FIN DE PARTIE ! ${winner} !`; }
+              });
+          };
+
+          const applyAIShift = (move) => {
+              mutateG(draft => {
+                  const blockId = draft.cour[move.pIdx][move.cIdx].pop();
+                  let msg = "";
+                  if (move.machine === 'S') { draft.stackers[1] = move.pIdx; if (draft.stackers[0] === move.pIdx) { draft.stackers[0] = null; } const targetCol = getFirstNonFullCol(draft.cour[move.targetPIdx]); draft.cour[move.targetPIdx][targetCol].push(blockId); msg = `🤖 L'IA a shifté un bloc de P${move.pIdx+1}.`; } 
+                  else { draft.transtainer = move.pIdx; if (draft.stackers[0] !== null && Math.abs(draft.stackers[0] - move.pIdx) <= 1) { draft.stackers[0] = null; } if (draft.stackers[1] !== null && Math.abs(draft.stackers[1] - move.pIdx) <= 1) { draft.stackers[1] = null; } draft.cour[move.pIdx][move.targetCIdx].push(blockId); msg = `🤖 L'IA utilise le Transtainer pour creuser la P${move.pIdx+1}.`; }
+                  draft.ap -= (move.moveCost + 1); draft.message = msg;
+              });
+          };
+          const applyAISpelo = () => { mutateG(draft => { draft.stackers[1] = null; draft.ap = 0; draft.message = `🤖 L'IA se retire en Spelo.`; }); };
+          const applyAITMoveOnly = (pIdx, cost) => { mutateG(draft => { draft.transtainer = pIdx; draft.ap -= cost; draft.stackers[0] = null; if (draft.stackers[1] !== null && Math.abs(draft.stackers[1] - pIdx) <= 1) { draft.stackers[1] = null; } draft.message = `🤖 SABOTAGE ! L'IA déplace le Transtainer pour vous bloquer !`; }); };
+
+          // --- LOGIQUE HUMAINE ---
+          const handleMachineSelect = (type, id) => {
+            if (!canInteract) { setLocalMsg(roomId ? "Attendez votre tour !" : ""); return; }
+            if (selected && selected.type === 'machine' && selected.id === id) { setSelected(null); setLocalMsg("Sélection annulée."); return; }
+            if (type === 'S' && id !== G.currentPlayer) { setLocalMsg("❌ Seulement VOTRE Stacker."); return; }
+            setSelected({ type: 'machine', id }); setLocalMsg("");
+            mutateG(draft => { draft.message = type === 'T' ? "🟡 TRANSTAINER : Cliquez au-dessus d'une Pile." : "🔵 STACKER : Cliquez sur le Parking d'une Pile."; });
+          };
+
+          const handleParkingClick = (pileIdx) => {
+            if (!canInteract) return;
+            if (selected && selected.type === 'machine') {
+              if (selected.id === 'T') {
+                const dist = Math.abs(pileIdx - G.transtainer);
+                if (dist === 0) { setSelected(null); return; }
+                if (G.ap < dist) { setLocalMsg("⚠️ PG Insuffisants."); return; }
+                mutateG(draft => { draft.ap -= dist; draft.transtainer = pileIdx; let bumped = false; if (draft.stackers[0] !== null && Math.abs(draft.stackers[0] - pileIdx) <= 1) { draft.stackers[0] = null; bumped = true; } if (draft.stackers[1] !== null && Math.abs(draft.stackers[1] - pileIdx) <= 1) { draft.stackers[1] = null; bumped = true; } draft.message = `🟡 Transtainer déplacé (-${dist} PG). ${bumped ? 'Expulsion en Spelo !' : ''}`; });
+                setSelected(null); setLocalMsg(""); return;
+              }
+              if (selected.id === G.currentPlayer) {
+                if (G.stackers[G.currentPlayer] === pileIdx) { setSelected(null); return; }
+                if (Math.abs(pileIdx - G.transtainer) <= 1) { setLocalMsg("❌ Bloqué par l'aura du Transtainer."); return; }
+                const cost = G.stackers[G.currentPlayer] === null ? 0 : 1;
+                if (G.ap < cost) { setLocalMsg("⚠️ PG Insuffisants."); return; }
+                mutateG(draft => { draft.ap -= cost; draft.stackers[draft.currentPlayer] = pileIdx; const enemy = draft.currentPlayer === 0 ? 1 : 0; let bumped = false; if (draft.stackers[enemy] === pileIdx) { draft.stackers[enemy] = null; bumped = true; } draft.message = `🔵 Stacker garé (-${cost} PG). ${bumped ? 'Adversaire renvoyé en Spelo !' : ''}`; });
+                setSelected(null); setLocalMsg(""); return;
+              }
+            }
+            if (selected && selected.type === 'block' && selected.machine === 'S') handleShiftDestination(pileIdx, null);
+          };
+
+          const handleColClick = (pileIdx, colIdx) => {
+            if (!canInteract) return;
+            if (selected && selected.type === 'block') { if (selected.pile === pileIdx && selected.col === colIdx) { setSelected(null); setLocalMsg("Sélection annulée."); return; } handleShiftDestination(pileIdx, colIdx); return; }
+            const pile = G.cour[pileIdx]; if (pile[colIdx].length === 0) return;
+            const hasT = (G.transtainer === pileIdx); const hasS = (G.stackers[G.currentPlayer] === pileIdx);
+            if (!hasT && !hasS) { setLocalMsg("❌ Aucune machine à vous ici."); return; }
+            if (hasT) { setSelected({ type: 'block', machine: 'T', pile: pileIdx, col: colIdx }); setLocalMsg(""); mutateG(draft => { draft.message = "🟡 Bloc sélectionné (T). Cliquez sur un Plan ou une colonne de CETTE pile."; }); return; }
+            if (hasS) { const firstCol = getFirstAvailCol(pile); if (colIdx !== firstCol) { setLocalMsg("❌ Le Stacker prend à l'avant seulement."); return; } setSelected({ type: 'block', machine: 'S', pile: pileIdx, col: colIdx }); setLocalMsg(""); mutateG(draft => { draft.message = "🔵 Bloc sélectionné (S). Cliquez sur un Plan ou une Pile ADJACENTE."; }); }
+          };
+
+          const handleShiftDestination = (targetPileIdx, targetColIdx) => {
+            if (G.ap < 1) { setLocalMsg("⚠️ PG Insuffisants pour Shifter."); return; }
+            if (selected.machine === 'T') { if (targetPileIdx !== selected.pile) { setLocalMsg("❌ Le Transtainer shifte dans SA Pile."); return; } if (targetColIdx === null) { setLocalMsg("❌ Cliquez sur la colonne cible."); return; } if (G.cour[targetPileIdx][targetColIdx].length >= 3) { setLocalMsg("❌ Colonne pleine (Max 3)."); return; } } 
+            else { if (Math.abs(targetPileIdx - selected.pile) !== 1) { setLocalMsg("❌ Le Stacker shifte en Pile ADJACENTE."); return; } const firstNonFull = getFirstNonFullCol(G.cour[targetPileIdx]); if (firstNonFull === -1) { setLocalMsg("❌ Pile adjacente pleine."); return; } targetColIdx = firstNonFull; }
+            mutateG(draft => { const block = draft.cour[selected.pile][selected.col].pop(); draft.cour[targetPileIdx][targetColIdx].push(block); draft.ap -= 1; draft.message = `✅ Shiftage réussi (-1 PG).`; });
+            setSelected(null); setLocalMsg("");
+          };
+
+          const handleCraneClick = (craneIndex) => {
+            if (!canInteract || !selected || selected.type !== 'block') return;
+            if (G.ap < 1) { setLocalMsg("⚠️ PG Insuffisants !"); return; }
+            const crane = G.cranes[craneIndex]; if (crane.phase === 'done') return;
+            const requiredBlockId = getCurrentRequirement(crane); const blockToPlaceId = G.cour[selected.pile][selected.col][G.cour[selected.pile][selected.col].length - 1];
+            if (requiredBlockId !== blockToPlaceId) { setLocalMsg(`❌ Erreur : Requis [${BLOCK_TYPES[requiredBlockId].name}].`); return; }
+            mutateG(draft => {
+                draft.cour[selected.pile][selected.col].pop(); let pointsEarned = BLOCK_TYPES[blockToPlaceId].points;
+                const activeCrane = draft.cranes[craneIndex]; activeCrane.progress += 1;
+                const currentTotal = activeCrane.phase === 'bay' ? activeCrane.bayData.total : activeCrane.deckData.total;
+                if (activeCrane.progress === currentTotal) { if (activeCrane.phase === 'bay') { activeCrane.phase = 'deck'; activeCrane.progress = 0; pointsEarned += 5; draft.message = `✅ Baie scellée ! (+${pointsEarned} PF)`; } else { activeCrane.phase = 'done'; pointsEarned += 10; draft.message = `🚢 Deck terminé ! (+${pointsEarned} PF)`; } } 
+                else { draft.message = `📦 Posé ! (+${BLOCK_TYPES[blockToPlaceId].points} PF).`; }
+                draft.players[draft.currentPlayer].score += pointsEarned; draft.ap -= 1;
+                if (draft.cranes.filter(c => c.phase === 'done').length >= 2) { draft.gameStatus = 'gameover'; const winner = draft.players[0].score > draft.players[1].score ? "Joueur 1 (Bleu)" : (draft.players[0].score < draft.players[1].score ? "Joueur 2 (Rouge)" : "Égalité"); draft.message = `🚨 FIN DE PARTIE ! Vainqueur : ${winner} !`; }
+            });
+            setSelected(null); setLocalMsg("");
+          };
+
+          const handleVoluntarySpelo = () => { if (G.stackers[G.currentPlayer] === null || !canInteract) return; mutateG(draft => { draft.stackers[draft.currentPlayer] = null; draft.ap = 0; draft.message = `Retraite en Zone Spelo. Fin de tour forcée.`; }); setSelected(null); setLocalMsg(""); setTimeout(endTurn, 1000); };
+          const endTurn = () => { if (!canInteract) return; mutateG(draft => { draft.currentPlayer = draft.currentPlayer === 0 ? 1 : 0; draft.ap = 4; draft.message = `Tour terminé. C'est à Joueur ${draft.currentPlayer === 0 ? 1 : 2}. (4 PG)`; }); setSelected(null); setLocalMsg(""); };
+          const handleUndo = () => { if (!G.history || G.history.length === 0 || !canInteract) return; const newG = JSON.parse(JSON.stringify(G)); const previousState = newG.history.pop(); const restoredG = { ...previousState, history: newG.history }; restoredG.message = "⏪ Action annulée."; setG(restoredG); if (roomId && db && user) { setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), { payload: JSON.stringify(restoredG) }); } setSelected(null); setLocalMsg(""); };
+
+          const renderMachineToken = (type, player = null) => {
+            if (type === 'T') return <div className="bg-yellow-500 border border-black rounded-sm shadow-md flex items-center justify-center font-black text-black w-6 h-6 text-[10px]">T</div>;
+            if (type === 'S') return <div className={`${player===0 ? 'bg-blue-600' : 'bg-red-600'} border border-white rounded-full shadow-md flex items-center justify-center font-black text-white w-6 h-6 text-[10px]`}>S{player+1}</div>;
+          };
+
+          // --- RENDU : LOBBY ---
+          if (!G) {
+              return (
+                  <div className="min-h-screen text-slate-200 font-mono flex flex-col items-center justify-center p-4">
+                      <div className="max-w-md w-full bg-slate-900 border-2 border-slate-700 p-8 rounded-xl shadow-2xl text-center">
+                          <h1 className="text-4xl font-bold text-blue-400 mb-2 uppercase tracking-widest font-sans">Container Rush</h1>
+                          <p className="text-slate-400 mb-8 text-sm">Édition Multijoueur Connectée</p>
+                          
+                          {localMsg && <div className="bg-red-900/50 border border-red-500 text-red-200 p-2 rounded mb-6 text-sm">{localMsg}</div>}
+
+                          <div className="bg-slate-800/80 p-4 rounded-lg border border-slate-700 text-left text-sm mb-6 text-slate-300 shadow-inner">
+                              <h3 className="text-blue-400 font-bold mb-2 uppercase text-xs tracking-widest">Comment jouer en ligne ?</h3>
+                              <ol className="list-decimal pl-5 space-y-1">
+                                  <li>Un joueur clique sur <strong className="text-white">Créer une salle</strong>.</li>
+                                  <li>Il note et partage le <strong className="text-yellow-400">code à 5 lettres</strong> de la salle.</li>
+                                  <li>L'autre joueur entre le code ci-dessous et clique sur <strong className="text-white">Rejoindre</strong>.</li>
+                                  <li>Une fois en jeu, répartissez-vous les <strong className="text-blue-300">Sièges J1 et J2</strong> en haut de l'écran.</li>
+                              </ol>
+                          </div>
+
+                          <div className="space-y-4">
+                              <button onClick={createRoom} disabled={isAuthLoading} className={`w-full font-bold py-3 px-4 rounded transition shadow-lg ${isAuthLoading ? 'bg-slate-600 text-slate-400 cursor-wait' : 'bg-blue-700 hover:bg-blue-600 text-white'}`}>
+                                  {isAuthLoading ? '⏳ CONNEXION EN COURS...' : '🌐 CRÉER UNE SALLE EN LIGNE'}
+                              </button>
+                              
+                              <div className="relative flex py-2 items-center">
+                                  <div className="flex-grow border-t border-slate-700"></div><span className="flex-shrink-0 mx-4 text-slate-500 text-xs">OU</span><div className="flex-grow border-t border-slate-700"></div>
+                              </div>
+
+                              <div className="flex gap-2">
+                                  <input type="text" value={joinCodeInput} onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())} placeholder="CODE (5 lettres)" className="w-2/3 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-center font-bold tracking-widest text-white focus:outline-none focus:border-blue-500" maxLength={5} />
+                                  <button onClick={joinExistingRoom} disabled={isAuthLoading} className={`w-1/3 font-bold py-2 px-4 rounded transition shadow-lg ${isAuthLoading ? 'bg-slate-600 text-slate-400' : 'bg-emerald-700 hover:bg-emerald-600 text-white'}`}>REJOINDRE</button>
+                              </div>
+
+                              <div className="pt-6 mt-6 border-t border-slate-800">
+                                  <button onClick={startLocalGame} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-4 rounded transition border border-slate-600 text-sm">💻 JOUER EN LOCAL (1 Écran)</button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              );
+          }
+
+          // --- RENDU : JEU ---
+          return (
+            <div className="min-h-screen text-slate-200 font-mono flex flex-col items-center p-3">
+              <div className="w-full max-w-[1400px] flex justify-between items-center bg-slate-900 p-3 rounded-lg border border-slate-800 shadow-xl mb-3">
+                <div className="flex flex-col gap-1 w-1/4">
+                    <div className={`text-lg font-bold px-4 py-1.5 rounded-md transition-all text-center ${G.currentPlayer === 0 ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)]' : 'bg-slate-800 text-slate-500'}`}>J1 (Bleu) : {G.players[0].score} PF {mySeat === 0 && ' (VOUS)'}</div>
+                    {G.currentPlayer === 0 && G.stackers[0] !== null && G.ap >= 2 && canInteract && (<button onClick={handleVoluntarySpelo} className="text-[10px] bg-slate-700 hover:bg-slate-600 text-white py-0.5 rounded border border-slate-500">Go Spelo (2 PG)</button>)}
+                </div>
+                
+                <div className="flex flex-col items-center w-1/2">
+                  <div className="flex items-center gap-4 mb-1">
+                     <h1 className="text-2xl font-bold uppercase tracking-widest text-slate-100">Container Rush</h1>
+                     {roomId && <span className="bg-slate-800 border border-slate-600 text-emerald-400 px-2 py-0.5 rounded text-xs font-bold tracking-widest">SALLE : {roomId}</span>}
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                     <div className="flex bg-slate-800 rounded p-0.5 border border-slate-700">
+                         <button onClick={()=>setMySeat(0)} className={`text-[10px] font-bold px-3 py-1 rounded transition ${mySeat===0 ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>SIÈGE J1</button>
+                         <button onClick={()=>setMySeat(1)} className={`text-[10px] font-bold px-3 py-1 rounded transition ${mySeat===1 ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>SIÈGE J2</button>
+                     </div>
+                     <button onClick={() => setShowMenuConfirm(true)} className="text-[10px] bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded border border-slate-500 transition">🏠 MENU</button>
+                     <button onClick={() => setShowNewGameConfirm(true)} disabled={!canInteract} className={`text-[10px] px-2 py-1 rounded border transition ${canInteract ? 'bg-emerald-700 hover:bg-emerald-600 text-white border-emerald-500 shadow-md' : 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'}`}>🔄 NOUVELLE PARTIE</button>
+                     <button onClick={() => setShowRules(true)} className="text-[10px] bg-slate-700 hover:bg-slate-600 text-blue-300 font-bold px-2 py-1 rounded border border-slate-500 shadow-md">📖 RÈGLES</button>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-md text-yellow-400 font-bold bg-black px-3 py-1 rounded-full border border-yellow-600 shadow-inner">PG : {G.ap} / 4</span>
+                    <button onClick={handleUndo} disabled={!G.history || G.history.length === 0 || !canInteract} className={`flex items-center gap-1 px-2 py-1 rounded font-bold transition border text-xs ${G.history && G.history.length > 0 && canInteract ? 'bg-slate-700 hover:bg-slate-600 text-white border-slate-500' : 'bg-slate-900 text-slate-600 border-slate-800 cursor-not-allowed'}`}>↩️ Undo</button>
+                    <button onClick={endTurn} disabled={!canInteract} className={`px-3 py-1 rounded font-bold text-xs ${!canInteract ? 'bg-red-900 text-slate-500' : 'bg-red-700 hover:bg-red-600 text-white'}`}>PASSER</button>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 mt-2">
+                      <button onClick={() => setIsAIEnabled(!isAIEnabled)} className={`text-xs font-bold px-3 py-1 rounded border transition ${isAIEnabled ? 'bg-purple-600 text-white border-purple-400 shadow-[0_0_10px_purple]' : 'bg-slate-800 text-slate-400 border-slate-600'}`}>{isAIEnabled ? '🤖 MODE IA ACTIVÉ' : '🙎‍♂️ MODE 2 JOUEURS'}</button>
+                      {isAIEnabled && (
+                          <div className="flex bg-slate-800 rounded p-0.5 border border-slate-700 mt-1">
+                              <button onClick={()=>setAiDifficulty('facile')} className={`text-[9px] font-bold px-2 py-0.5 rounded transition ${aiDifficulty==='facile' ? 'bg-green-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>FACILE</button>
+                              <button onClick={()=>setAiDifficulty('moyen')} className={`text-[9px] font-bold px-2 py-0.5 rounded transition ${aiDifficulty==='moyen' ? 'bg-yellow-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>MOYEN</button>
+                              <button onClick={()=>setAiDifficulty('difficile')} className={`text-[9px] font-bold px-2 py-0.5 rounded transition ${aiDifficulty==='difficile' ? 'bg-red-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>DIFFICILE</button>
+                          </div>
+                      )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1 w-1/4">
+                    <div className={`text-lg font-bold px-4 py-1.5 rounded-md transition-all text-center ${G.currentPlayer === 1 ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.5)]' : 'bg-slate-800 text-slate-500'}`}>J2 (Rouge) : {G.players[1].score} PF {isAIEnabled ? '(IA)' : (mySeat === 1 && ' (VOUS)')}</div>
+                    {G.currentPlayer === 1 && G.stackers[1] !== null && G.ap >= 2 && canInteract && !isAIEnabled && (<button onClick={handleVoluntarySpelo} className="text-[10px] bg-slate-700 hover:bg-slate-600 text-white py-0.5 rounded border border-slate-500">Go Spelo (2 PG)</button>)}
+                </div>
+              </div>
+
+              <div className="w-full max-w-[1400px] bg-black p-2 text-center text-green-400 border border-slate-800 rounded mb-3 font-semibold text-sm min-h-[40px] flex items-center justify-center flex-col shadow-inner">
+                <span>{G.message}</span>
+                {localMsg && <span className="text-red-400 text-xs mt-1">{localMsg}</span>}
+                {roomId && !isMyTurn && !isAIEnabled && <span className="text-slate-500 text-xs mt-1">En attente de l'adversaire...</span>}
+              </div>
+
+              <div className={`w-full max-w-[1400px] flex flex-col xl:flex-row gap-4 transition-opacity ${!canInteract ? 'opacity-80' : ''}`}>
+                <div className="w-full xl:w-[30%] flex flex-col gap-3">
+                  <div className="flex justify-between items-end border-b border-slate-700 pb-1"><h2 className="text-lg font-bold text-slate-400">PLANS DE CHARGEMENT</h2></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-1 gap-3 overflow-y-auto" style={{maxHeight: '75vh'}}>
+                    {G.cranes.map((crane, idx) => {
+                      const isDone = crane.phase === 'done'; const reqBlock = getCurrentRequirement(crane);
+                      return (
+                        <div key={crane.id} onClick={() => handleCraneClick(idx)} className={`p-3 rounded-lg border ${canInteract ? 'cursor-pointer' : ''} transition relative flex flex-col gap-2 ${isDone ? 'bg-slate-950 border-green-900 opacity-60' : crane.phase === 'bay' ? 'bg-slate-900 border-slate-600 hover:border-yellow-500' : 'bg-[#0b1736] border-blue-500 hover:border-yellow-500 shadow-[0_0_15px_rgba(59,130,246,0.15)]'}`}>
+                          {!isDone && selected && selected.type === 'block' && G.cour[selected.pile][selected.col][G.cour[selected.pile][selected.col].length - 1] === reqBlock && (<div className="absolute inset-0 bg-yellow-400/10 animate-pulse pointer-events-none rounded-lg"></div>)}
+                          <div className="flex justify-between items-center z-10 border-b border-white/10 pb-1"><span className="font-bold text-sm text-white">{crane.name}</span><div className="flex items-center gap-2">{!isDone && (<div className="flex items-center gap-1 bg-black/60 px-1.5 py-0.5 rounded border border-white/10"><span className="text-[9px] text-slate-400">REQUIS:</span><BlockTile blockId={reqBlock} isSelected={false} status="normal" /></div>)}</div></div>
+                          {!isDone ? (<div className="flex flex-col gap-2 z-10 relative"><div className="absolute left-1/2 top-0 bottom-0 w-px border-l border-dashed border-white/10 -z-10"></div><MiniMap layoutData={crane.deckData} progress={crane.phase === 'deck' ? crane.progress : 0} type="deck" isActive={crane.phase === 'deck'} name={crane.deckName} /><MiniMap layoutData={crane.bayData} progress={crane.phase === 'bay' ? crane.progress : crane.bayData.total} type="bay" isActive={crane.phase === 'bay'} name={crane.bayName} /></div>) : (<div className="text-center text-green-600 font-bold py-8 text-xl tracking-widest">SCELLÉ</div>)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="w-full xl:w-[70%] flex flex-col">
+                   <div className="flex justify-between items-end border-b border-slate-700 pb-2 mb-3">
+                     <h2 className="text-lg font-bold text-slate-400">LA COUR (VUE DE PROFIL)</h2>
+                     <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded border border-slate-600 shadow-inner">
+                         <span className="text-[10px] font-bold text-slate-400 uppercase">Zone Spelo :</span>
+                         <div className="flex gap-1.5">
+                             <div onClick={() => handleMachineSelect('S', 0)} className={`${canInteract ? 'cursor-pointer' : ''} ${selected?.type==='machine' && selected.id===0 ? 'ring-2 ring-yellow-400 rounded-full' : ''}`}>{G.stackers[0] === null ? renderMachineToken('S', 0) : <div className="w-6 h-6 border border-dashed border-slate-500 rounded-full opacity-30"></div>}</div>
+                             <div onClick={() => handleMachineSelect('S', 1)} className={`${canInteract ? 'cursor-pointer' : ''} ${selected?.type==='machine' && selected.id===1 ? 'ring-2 ring-yellow-400 rounded-full' : ''}`}>{G.stackers[1] === null ? renderMachineToken('S', 1) : <div className="w-6 h-6 border border-dashed border-slate-500 rounded-full opacity-30"></div>}</div>
+                         </div>
+                     </div>
+                   </div>
+                   
+                   <div className="bg-slate-900 p-4 rounded-xl border-2 border-slate-800 shadow-[inset_0_10px_30px_rgba(0,0,0,0.8)] overflow-x-auto flex-grow">
+                     <div className="flex flex-row gap-6 pb-2 w-max">
+                        {G.cour.map((pile, pIdx) => {
+                            const isAura = Math.abs(pIdx - G.transtainer) <= 1;
+                            return (
+                                <div key={pIdx} className="flex flex-col relative bg-black/40 p-2 rounded-lg border border-slate-800 shrink-0">
+                                    <div className="flex justify-between items-center mb-1 border-b border-slate-700/50 pb-1">
+                                        <span className="text-[10px] text-slate-500 font-bold ml-1">PILE {pIdx + 1}</span>
+                                        <div onClick={() => handleParkingClick(pIdx)} className={`w-full ml-4 h-4 bg-slate-800/50 border border-slate-700 rounded-sm flex items-center justify-center transition ${canInteract ? 'cursor-pointer' : ''} ${selected?.type==='machine' && selected.id==='T' ? 'bg-yellow-500/20 border-yellow-500 animate-pulse' : 'hover:bg-slate-700'}`}>{G.transtainer === pIdx && (<div onClick={(e) => { e.stopPropagation(); handleMachineSelect('T', 'T'); }} className={`transition-transform ${selected?.type==='machine' && selected.id==='T' ? 'scale-125' : 'hover:scale-110'}`}>{renderMachineToken('T')}</div>)}</div>
+                                    </div>
+                                    {isAura && <div className="absolute inset-0 bg-red-900/10 border border-red-500/30 rounded-lg pointer-events-none z-0"></div>}
+                                    <div className="flex items-end gap-2 mt-1 relative z-10">
+                                        <div className="absolute -left-1 bottom-0 text-[8px] text-slate-600 -rotate-90 origin-bottom-left uppercase tracking-widest">Avant</div>
+                                        <div onClick={() => handleParkingClick(pIdx)} className={`w-8 h-12 flex flex-col justify-end items-center pb-1 rounded border-b-2 transition ${canInteract ? 'cursor-pointer' : ''} ${isAura ? 'border-red-800 bg-red-950/30' : 'border-slate-500 bg-slate-800 hover:bg-slate-700'}`}>{G.stackers[0] === pIdx && <div onClick={(e)=>{e.stopPropagation(); handleMachineSelect('S',0);}}>{renderMachineToken('S', 0)}</div>}{G.stackers[1] === pIdx && <div onClick={(e)=>{e.stopPropagation(); handleMachineSelect('S',1);}} className="mt-1">{renderMachineToken('S', 1)}</div>}{G.stackers[0] !== pIdx && G.stackers[1] !== pIdx && <span className="text-[8px] text-slate-500">PARK</span>}</div>
+                                        <div className="flex gap-1">
+                                            {pile.map((col, cIdx) => (
+                                                <div key={cIdx} onClick={() => handleColClick(pIdx, cIdx)} className={`w-8 h-[92px] bg-slate-900/80 rounded flex flex-col-reverse justify-start items-center p-0.5 border-x border-t border-slate-700 transition ${canInteract ? 'cursor-pointer' : ''} ${selected?.type === 'block' && selected.pile === pIdx && selected.col === cIdx ? 'bg-yellow-400/10 border-yellow-400' : col.length >= 3 ? 'border-b-2 border-b-slate-950' : 'hover:bg-slate-800 border-b border-b-slate-700'}`}>
+                                                    {col.map((blockId, bIdx) => (<BlockTile key={bIdx} blockId={blockId} isSelected={bIdx === col.length - 1 && selected?.type === 'block' && selected.pile === pIdx && selected.col === cIdx} status="normal" />))}
+                                                    {selected?.type === 'block' && selected.machine === 'T' && selected.pile === pIdx && col.length < 3 && (<div className="w-full flex-grow border border-dashed border-white/20 rounded mt-0.5 flex items-center justify-center opacity-50"><span className="text-[8px]">SHIFT</span></div>)}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="text-[8px] text-slate-600 uppercase tracking-widest self-center ml-1">Fond</div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                     </div>
+                   </div>
+                   <div className="mt-3 flex flex-wrap justify-center gap-3 bg-slate-900 p-2 rounded-lg border border-slate-800 shadow-lg">
+                     {Object.values(BLOCK_TYPES).map(b => (
+                       <div key={b.id} className="flex items-center gap-1.5 bg-black/40 px-2 py-1 rounded border border-slate-700"><div className="w-5 h-5 rounded-sm border shadow-sm flex items-center justify-center text-[9px] font-black" style={b.style}>{b.label}</div><span className="text-[10px] font-bold text-slate-300">{b.name} <span className="text-yellow-500 font-normal">({b.points})</span></span></div>
+                     ))}
+                   </div>
+                </div>
+              </div>
+
+              {/* MODALS */}
+              {showRules && (
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                  <div className="bg-slate-900 border-2 border-slate-700 rounded-xl max-w-5xl w-full max-h-[85vh] overflow-y-auto p-6 lg:p-8 shadow-[0_0_50px_rgba(0,0,0,1)] relative text-sm text-slate-300">
+                    <button onClick={() => setShowRules(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1 px-3 rounded transition shadow-md">X FERMER</button>
+                    <h2 className="text-2xl lg:text-3xl font-bold text-blue-400 mb-6 border-b border-slate-700 pb-3 uppercase tracking-widest font-sans">📖 Manuel du Superviseur Logistique</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div>
+                        <h3 className="text-lg font-bold text-yellow-400 mb-2 border-b border-slate-800 pb-1">LE BUT DU JEU</h3>
+                        <p className="mb-6">Cumulez un maximum de Points de Fret (PF) en chargeant les conteneurs sur les 3 Grues. La partie se termine quand 2 des 3 "Decks" (Plans supérieurs) sont scellés.</p>
+                        <h3 className="text-lg font-bold text-yellow-400 mb-2 border-b border-slate-800 pb-1">LA MACHINERIE (4 PG/tour)</h3>
+                        <ul className="list-none space-y-4 mb-4">
+                          <li className="bg-black/30 p-3 rounded border border-slate-800"><strong className="text-blue-400 text-base">🔵 STACKER (S) :</strong> 1 PG pour bouger. Prend uniquement le bloc à l'avant. Shifte vers une pile adjacente.</li>
+                          <li className="bg-black/30 p-3 rounded border border-slate-800"><strong className="text-yellow-500 text-base">🟡 TRANSTAINER (T) :</strong> 1 PG par pile traversée. Bloque les Stackers avec son aura. Peut prendre n'importe quel sommet. Shifte dans sa propre pile.</li>
+                        </ul>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-bold text-emerald-400 mb-2 border-b border-slate-800 pb-1">⚙️ COMMENT JOUER ?</h3>
+                        <ol className="list-decimal pl-5 space-y-3 mb-6 bg-slate-800/50 p-4 rounded border border-slate-700">
+                          <li>Sélectionnez votre Stacker ou le Transtainer.</li>
+                          <li>Déplacez-vous en cliquant sur la barre (T) ou le parking (S).</li>
+                          <li>Cliquez sur un bloc valide de la pile.</li>
+                          <li>Cliquez sur la Grue à gauche pour le poser et gagner vos PF.</li>
+                          <li>Ou cliquez sur une autre destination pour le Shifter (Dégager un bloc).</li>
+                        </ol>
+                        <h3 className="text-lg font-bold text-red-400 mb-2 border-b border-slate-800 pb-1">LA ZONE SPELO</h3>
+                        <p>Si vous êtes écrasé par un adversaire ou l'Aura du Transtainer, vous êtes expulsé en Spelo. L'avantage : revenir sur le terrain au prochain tour coûte 0 PG !</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {showNewGameConfirm && (
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                  <div className="bg-slate-900 border-2 border-slate-700 rounded-xl max-w-md w-full p-6 shadow-[0_0_50px_rgba(0,0,0,1)] text-center text-slate-300">
+                     <h2 className="text-2xl font-bold text-emerald-400 mb-4 uppercase tracking-widest font-sans">Nouvelle Partie</h2>
+                     <p className="mb-6">Réinitialiser le plateau pour tous les joueurs ? L'état actuel sera perdu.</p>
+                     <div className="flex justify-center gap-4">
+                         <button onClick={() => setShowNewGameConfirm(false)} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-bold transition">ANNULER</button>
+                         <button onClick={() => { handleRestartGame(); setShowNewGameConfirm(false); }} className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded font-bold transition shadow-lg">RÉINITIALISER</button>
+                     </div>
+                  </div>
+                </div>
+              )}
+
+              {showMenuConfirm && (
+                <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+                  <div className="bg-slate-900 border-2 border-slate-700 rounded-xl max-w-md w-full p-6 shadow-[0_0_50px_rgba(0,0,0,1)] text-center text-slate-300">
+                     <h2 className="text-2xl font-bold text-blue-400 mb-4 uppercase tracking-widest font-sans">Retour au Menu</h2>
+                     <p className="mb-4">Quitter cette partie et retourner à l'accueil ?</p>
+                     {roomId && (
+                         <div className="bg-blue-900/30 border border-blue-500/50 p-3 rounded mb-6 shadow-inner">
+                             <p className="text-sm text-blue-300 mb-1">Pour revenir dans cette salle, notez :</p>
+                             <p className="text-3xl font-bold text-white tracking-widest">{roomId}</p>
+                         </div>
+                     )}
+                     <div className="flex justify-center gap-4">
+                         <button onClick={() => setShowMenuConfirm(false)} className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded font-bold transition">ANNULER</button>
+                         <button onClick={() => { returnToMenu(); setShowMenuConfirm(false); }} className="px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded font-bold transition shadow-lg">QUITTER</button>
+                     </div>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          );
+        }
+
+        // --- DÉMARRAGE REACT ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
