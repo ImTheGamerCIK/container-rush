@@ -390,6 +390,17 @@
               document.body.removeChild(textArea);
           };
 
+          const copyRoomCode = (e) => {
+              if(e) e.stopPropagation();
+              const textArea = document.createElement("textarea");
+              textArea.value = roomId; 
+              document.body.appendChild(textArea); 
+              textArea.select();
+              try { document.execCommand('copy'); setLocalMsg("Code copié !"); } catch (err) {}
+              document.body.removeChild(textArea);
+              setTimeout(() => setLocalMsg(""), 2000);
+          };
+
           const createRoom = async () => {
               if (!db || !user) { setLocalMsg("Connexion impossible."); return; }
               const code = generateRoomCode();
@@ -684,7 +695,7 @@
           };
 
           const handleVoluntarySpelo = () => { 
-              if (G.stackers[G.currentPlayer] === null || !canInteract || G.ap < 2) { setLocalMsg("⚠️ Impossible: Pas de machine ou < 2 PG."); return; }
+              if (G.stackers[G.currentPlayer] === null || !canInteract || (G.ap < 2 && !tutorialState)) { setLocalMsg("⚠️ Impossible: Pas de machine ou < 2 PG."); return; }
               if (!processTutorialAction('voluntary_spelo', [])) return;
               mutateG(draft => { draft.stackers[draft.currentPlayer] = null; draft.ap -= 2; draft.message = `Spelo (-2 PG)`; }); setSelected(null); setLocalMsg("");
           };
@@ -780,11 +791,11 @@
               {G && (
                 <div className="h-full w-full flex flex-col p-1 sm:p-2 gap-1.5 relative">
                   {/* 1. HEADER (Compact) */}
-                  <div className="flex-none flex justify-between items-center bg-slate-900 p-1 md:p-2 rounded border border-slate-800 shadow-md">
+                  <div className="flex-none flex justify-between items-start bg-slate-900 p-1 md:p-2 rounded border border-slate-800 shadow-md">
                     <div className="flex flex-col w-[30%]">
-                        <div className={`text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 0 || tutorialState ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500'}`}>J1: {G.players[0].score} PF</div>
+                        <div className={`w-full text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 0 || tutorialState ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500'}`}>J1: {G.players[0].score} PF</div>
                     </div>
-                    <div className="flex flex-col items-center justify-center flex-1">
+                    <div className="flex flex-col items-center justify-center flex-1 mt-0.5">
                       <div className="flex items-center gap-1 mb-0.5">
                          <button onClick={() => setShowMenuConfirm(true)} className="text-[10px] bg-slate-700 text-white px-2 py-0.5 rounded">🏠</button>
                          {!tutorialState && <button onClick={() => setShowNewGameConfirm(true)} disabled={!canInteract} className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded">🔄</button>}
@@ -798,6 +809,14 @@
                     </div>
                     <div className="flex flex-col w-[30%] items-end">
                         <div className={`w-full text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 1 && !tutorialState ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-500'}`}>{tutorialState ? 'TUTO' : `J2: ${G.players[1].score} PF`}</div>
+                        
+                        {/* AFFICHAGE DU CODE DE SALLE IN-GAME */}
+                        {roomId && !tutorialState && (
+                            <div className="flex items-center gap-1 mt-1 w-full justify-end">
+                                <span className="text-[10px] text-slate-400 font-bold bg-slate-900 px-1 py-0.5 rounded border border-slate-700">SALLE: {roomId}</span>
+                                <button onClick={copyRoomCode} className="text-[9px] bg-blue-700 hover:bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold shadow-sm transition">COPIER</button>
+                            </div>
+                        )}
                     </div>
                   </div>
 
