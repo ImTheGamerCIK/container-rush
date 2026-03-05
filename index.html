@@ -24,7 +24,6 @@
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
-        // 1. IMPORTS SPÉCIFIQUES POUR LE WEB (CDN)
         import { initializeApp, getApps, getApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
         import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -56,7 +55,7 @@
             console.error("Erreur Init Firebase:", e);
         }
 
-        // --- CONFIGURATION ET DONNÉES DU JEU (BASE 1.6) ---
+        // --- CONFIGURATION ET DONNÉES DU JEU (CHARTE PREMIUM) ---
         const BLOCK_TYPES = {
           L:   { id: 'L',   label: 'L',   name: 'Léger',    style: { backgroundColor: '#f8fafc', color: '#0f172a', borderColor: '#cbd5e1' }, points: 1 },
           M:   { id: 'M',   label: 'M',   name: 'Moyen',    style: { backgroundColor: '#94a3b8', color: '#0f172a', borderColor: '#475569' }, points: 2 },
@@ -145,80 +144,125 @@
             return code;
         };
 
-        // --- LE SCRIPT DU TUTORIEL (100% Légal & Fluide) ---
+        // --- LE SCRIPT DU TUTORIEL GUIDÉ ---
         const TUTORIAL_STEPS = [
-            { type: 'info', title: 'Tutoriel : Les Fondations', text: 'La Grue 1 (B01) demande 2 blocs Lourds (Rouges) pour sa fondation. Suivez le halo vert clignotant pour apprendre à jouer !' },
+            { type: 'info', title: 'Le But du Jeu', text: 'Bienvenue sur le terminal ! Le but du jeu est d\'accumuler le maximum de Points de Fret (PF) en chargeant le navire selon des plans stricts.' },
+            { type: 'info', title: 'Les Points de Fret', text: 'Chaque conteneur rapporte des points différents : Lourd=1 PF, Moyen=2 PF, jusqu\'au Twin=5 PF ! La Grue 1 (B01) demande 2 Lourds (Noirs) pour commencer. Suivez le halo vert !' },
             
-            // TOUR 1 : Bases (Stacker & Transtainer)
-            { type: 'action', target: 'FLEET_S0', actionType: 'select_machine', args: ['S', 0], text: 'TOUR 1. Vous avez 4 PG. Sélectionnez votre Stacker (S1) bleu dans la flotte en haut.' },
-            { type: 'action', target: 'NAV_1', actionType: 'move_machine', args: [1], text: 'Garez le Stacker sur la Pile 2 dans le Navigateur central (-1 PG).' },
-            { type: 'action', target: 'DETAIL_COL_0', targetPile: 1, actionType: 'select_block', args: [0], text: 'Le Stacker (S) ne prend QUE le bloc à l\'avant. Cliquez sur le bloc Lourd (Rouge) dans la vue détaillée.' },
-            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Posez ce bloc sur la Grue 1 pour démarrer la fondation (-1 PG) !' },
+            // TOUR 1
+            { type: 'action', target: 'FLEET_S0', actionType: 'select_machine', args: ['S', 0], text: 'TOUR 1. Vous disposez de 4 Points Grue (PG) par tour. Ces PG représentent votre énergie d\'action ! Sélectionnez votre Stacker (S1) bleu dans la flotte en haut.' },
+            { type: 'action', target: 'NAV_1', actionType: 'move_machine', args: [1], text: 'Les machines sont essentielles : sans elles au parking d\'une pile, impossible d\'interagir ! Garez le Stacker sur la Pile 2 dans le Navigateur central (-1 PG).' },
+            { type: 'action', target: 'DETAIL_COL_0', targetPile: 1, actionType: 'select_block', args: [0], text: 'Le Stacker (S) ne prend QUE le conteneur à l\'avant. Cliquez sur le conteneur Lourd (Noir) dans la vue détaillée.' },
+            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Pour envoyer ce conteneur au navire, cliquez sur la Grue 1. Cela valide le chargement et démarre la fondation (-1 PG) !' },
             
             { type: 'action', target: 'FLEET_T', actionType: 'select_machine', args: ['T', 'T'], text: 'Il vous reste 2 PG. Sélectionnez le grand Transtainer (T) jaune.' },
-            { type: 'action', target: 'NAV_3', actionType: 'move_machine', args: [3], text: 'Déplacez le Transtainer sur la Pile 4 (-1 PG).' },
-            { type: 'action', target: 'DETAIL_COL_2', targetPile: 3, actionType: 'select_block', args: [2], text: 'Le Transtainer peut plonger n\'importe où. Prenez le bloc Lourd (Rouge) de la 3ème colonne.' },
-            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Posez-le sur la Grue 1 (-1 PG). La fondation A est prête !' },
+            { type: 'action', target: 'NAV_3', actionType: 'move_machine', args: [3], text: 'Le Transtainer est puissant, mais chaque déplacement coûte de précieux PG qui auraient pu servir à envoyer des conteneurs ! Déplacez-le sur la Pile 4 (-1 PG).' },
+            { type: 'action', target: 'DETAIL_COL_2', targetPile: 3, actionType: 'select_block', args: [2], text: 'Contrairement au Stacker, le Transtainer peut plonger pour prendre n\'importe quel conteneur au sommet. Prenez le conteneur Lourd (Noir) de la 3ème colonne.' },
+            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Envoyez-le sur la Grue 1 (-1 PG). La fondation A est prête !' },
             { type: 'action', target: 'PASS_BTN', actionType: 'pass_turn', args: [], text: 'Vos 4 PG sont épuisés. Cliquez sur PASSER (bouton rouge).' },
             
-            // TOUR DE L'IA (Aura & Spelo)
-            { type: 'ai_turn', title: 'Tour de l\'IA', text: 'L\'IA déplace le Transtainer sur la Pile 2 pour son tour... L\'AURA ROUGE du Transtainer écrase votre Stacker ! Vous êtes expulsé en Zone Spelo.', execute: (draft) => { draft.transtainer = 1; draft.stackers[0] = null; draft.message="L'Aura T vous a expulsé en Spelo !"; draft.ap = 4; } },
+            // TOUR IA
+            { type: 'ai_turn', title: 'Tour de l\'IA', text: 'Tour de l\'IA : L\'IA déplace le Transtainer sur la Pile 2. Attention : Le Transtainer impose une Zone de Sécurité sur sa pile et les deux voisines. Votre Stacker s\'y trouvait : il est expulsé en Zone Spelo pour sa sécurité !', execute: (draft) => { draft.transtainer = 1; draft.stackers[0] = null; draft.message="La Zone de Sécurité vous expulse en Spelo !"; draft.ap = 4; } },
             
-            // TOUR 2 : Shiftages
+            // TOUR 2
             { type: 'action', target: 'FLEET_S0', actionType: 'select_machine', args: ['S', 0], text: 'TOUR 2 (4 PG). Votre Stacker est en Spelo. Sélectionnez-le.' },
             { type: 'action', target: 'NAV_4', actionType: 'move_machine', args: [4], text: 'SORTIR du Spelo coûte 0 PG ! Garez-vous sur la Pile 5.' },
-            { type: 'action', target: 'DETAIL_COL_0', targetPile: 4, actionType: 'select_block', args: [0], text: 'Le niveau B demande un Lourd (Rouge), bloqué par un Léger (Blanc) à l\'avant. Prenez le Blanc.' },
-            { type: 'action', target: 'NAV_5', actionType: 'shift_nav', args: [5], text: 'SHIFTAGE STACKER : Cliquez sur la Pile 6 voisine dans le navigateur pour y jeter le Blanc (-1 PG).' },
-            { type: 'action', target: 'DETAIL_COL_0', targetPile: 4, actionType: 'select_block', args: [0], text: 'Le bloc Lourd (Rouge) est dégagé ! Prenez-le.' },
-            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Posez-le sur la Grue 1 (-1 PG).' },
+            { type: 'action', target: 'DETAIL_COL_0', targetPile: 4, actionType: 'select_block', args: [0], text: 'Le niveau B demande un Lourd (Noir), bloqué par un Léger (Blanc) à l\'avant. Prenez le Blanc.' },
+            { type: 'action', target: 'NAV_5', actionType: 'shift_nav', args: [5], text: 'SHIFTAGE STACKER : Un Stacker shifte uniquement vers une pile voisine ! Cliquez sur la Pile 6 pour y jeter le Blanc (-1 PG). Vous pouvez aussi utiliser ce coup pour bloquer un joueur !' },
+            { type: 'action', target: 'DETAIL_COL_0', targetPile: 4, actionType: 'select_block', args: [0], text: 'Le conteneur Lourd (Noir) est dégagé ! Prenez-le.' },
+            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Envoyez-le sur la Grue 1 (-1 PG).' },
             
-            { type: 'action', target: 'NAV_1', actionType: 'navigate', args: [1], text: 'Il vous reste 2 PG. Cliquez sur la Pile 2 dans le Navigateur pour retourner voir le Transtainer.' },
+            { type: 'action', target: 'NAV_1', actionType: 'navigate', args: [1], text: 'Il vous reste 2 PG. Cliquez sur la Pile 2 dans le Navigateur pour y observer le Transtainer.' },
             { type: 'action', target: 'PARKING_T', targetPile: 1, actionType: 'select_machine', args: ['T', 'T'], text: 'Sélectionnez le Transtainer en cliquant sur son jeton directement garé dans le parking en bas !' },
             { type: 'action', target: 'DETAIL_COL_2', targetPile: 1, actionType: 'select_block', args: [2], text: 'La Grue 1 veut ensuite un Moyen (Gris), bloqué par un Léger (Blanc). Prenez le Blanc.' },
             { type: 'action', target: 'DETAIL_SHIFT_3', targetPile: 1, actionType: 'shift_detail', args: [3], text: 'SHIFTAGE TRANSTAINER : Le T shifte dans sa PROPRE pile. Cliquez sur la flèche ⬇️ de la colonne vide à côté (-1 PG).' },
-            { type: 'action', target: 'DETAIL_COL_2', targetPile: 1, actionType: 'select_block', args: [2], text: 'Prenez le bloc Moyen (Gris) maintenant accessible.' },
-            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Posez-le sur la Grue 1 (-1 PG). La structure monte !' },
+            { type: 'action', target: 'DETAIL_COL_2', targetPile: 1, actionType: 'select_block', args: [2], text: 'Prenez le conteneur Moyen (Gris) maintenant accessible.' },
+            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Envoyez-le sur la Grue 1 (-1 PG). La structure monte !' },
             { type: 'action', target: 'PASS_BTN', actionType: 'pass_turn', args: [], text: 'Tour terminé, cliquez sur PASSER.' },
             
-            { type: 'info', title: 'Tutoriel Terminé !', text: 'Vous maîtrisez la légalité des poses, la sélection via le parking, le shiftage, et l\'Aura. Le port vous appartient !', action: 'end' }
+            { type: 'info', title: 'Tutoriel Terminé !', text: 'Vous maîtrisez la légalité des poses, la sélection via le parking, le shiftage, et la Zone de Sécurité. Le port vous appartient !', action: 'end' }
         ];
 
-        // --- COMPOSANTS DE RENDU RESPONSIVES ---
-        const BlockTile = ({ blockId, isSelected, isAccessible, status }) => {
+        // --- COMPOSANTS DE RENDU PREMIUM ---
+        
+        // 1. La Tuile Conteneur (Volume 3D, Verrouillage Cube)
+        const BlockTile = ({ blockId, isSelected, isAccessible, status, isMini }) => {
           if (!blockId) return <div className="w-full h-full"></div>;
           const b = BLOCK_TYPES[blockId];
-          let classes = "w-full h-full rounded-[3px] border flex items-center justify-center font-black shadow-md relative transition-all duration-200 ";
           
-          let textClass = (b.label === 'HAZ' || b.label === 'TW') ? 'text-[clamp(6px,2vmin,14px)] tracking-tighter leading-none' : 'text-[clamp(8px,2.5vmin,16px)] leading-none';
+          let classes = "w-full h-full rounded-[2px] md:rounded-[3px] border flex items-center justify-center font-black relative transition-all duration-200 shrink-0 ";
+          
+          let inlineStyle = { 
+              ...b.style, 
+              boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.3)' 
+          };
+          
+          let textClass = isMini 
+              ? 'text-[7px] md:text-[9px]' 
+              : ((b.label === 'HAZ' || b.label === 'TW') ? 'text-[clamp(6px,2vmin,14px)] tracking-tighter' : 'text-[clamp(8px,2.5vmin,16px)]');
 
-          if (isSelected) { classes += " ring-[2px] ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)] z-20 scale-110 "; } 
-          else if (isAccessible && status === 'normal') { classes += " ring-[2px] ring-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.6)] z-10 hover:scale-105 cursor-pointer "; } 
-          else if (status === 'done') { classes += " opacity-20 grayscale scale-95 border-dashed "; } 
-          else if (status === 'current') { classes += " ring-[2px] ring-yellow-400 ring-offset-[1px] ring-offset-slate-900 animate-pulse z-10 scale-110 shadow-lg "; } 
-          else if (status === 'upcoming') { classes += " opacity-90 "; }
+          if (isSelected) { 
+              classes += " ring-[2px] ring-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)] z-20 scale-110 "; 
+          } else if (isAccessible && status === 'normal') { 
+              classes += " ring-[2px] ring-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.6)] z-10 hover:scale-105 cursor-pointer "; 
+          } 
+          
+          if (status === 'done') { 
+              classes += " opacity-40 scale-[0.9] border-dashed "; 
+          } else if (status === 'current') { 
+              classes += " ring-[2px] ring-yellow-400 ring-offset-[1px] ring-offset-slate-900 animate-pulse z-10 scale-110 shadow-lg "; 
+          } else if (status === 'upcoming') { 
+              classes += " opacity-90 "; 
+          }
 
           return (
-            <div className={classes} style={b.style} title={b.name}>
-              {status === 'done' ? <span className="text-white text-[10px] md:text-[14px]">✓</span> : <span className={textClass}>{b.label}</span>}
+            <div className={classes} style={inlineStyle} title={b.name}>
+              {status === 'done' 
+                  ? <span className="text-white text-[9px] md:text-[12px] drop-shadow-md">✓</span> 
+                  : <span className={`${textClass} leading-none drop-shadow-md`}>{b.label}</span>}
             </div>
           );
         };
 
+        // 2. La Mini-Carte (Flexbox dynamique anti-écrasement)
         const MiniMap = ({ layoutData, progress, type, isActive, name }) => {
-          const bgColor = type === 'bay' ? 'bg-slate-900 border-slate-700' : 'bg-blue-900/40 border-blue-800/50';
-          const opacity = isActive ? 'opacity-100' : 'opacity-40';
+          const isBay = type === 'bay';
+          
+          const bgStyle = isBay 
+            ? { backgroundColor: '#0f172a', backgroundImage: 'radial-gradient(ellipse at center, transparent 20%, rgba(0,0,0,0.8) 100%)' }
+            : { backgroundColor: '#1e3a8a', backgroundImage: 'linear-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.1) 1px, transparent 1px)', backgroundSize: '10px 10px' };
+          
+          const borderColor = isBay ? 'border-slate-600' : 'border-blue-400';
+          const headerBg = isBay ? 'bg-slate-800' : 'bg-slate-900/80';
+          const titleColor = isBay ? 'text-slate-300' : 'text-blue-100';
+          const opacity = isActive ? 'opacity-100' : 'opacity-60 saturate-50';
+
           return (
-            <div className={`p-1 rounded flex flex-col items-center border ${bgColor} ${opacity} transition-all duration-500 flex-1 min-h-0 w-full`}>
-              <div className={`text-[clamp(8px,1.8vh,12px)] mb-0.5 uppercase tracking-widest font-bold leading-none ${type === 'bay' ? 'text-slate-500' : 'text-blue-400'}`}>{name}</div>
-              <div className="flex-1 min-h-0 flex flex-col justify-end w-full pb-0.5">
+            <div className={`flex flex-col border-2 ${borderColor} rounded-lg overflow-hidden w-full h-full shadow-lg ${opacity} transition-all duration-500`} style={bgStyle}>
+              
+              <div className={`${headerBg} border-b ${borderColor} px-2 py-0.5 flex justify-between items-center z-10 shrink-0`}>
+                <span className={`text-[8px] md:text-[10px] font-bold uppercase tracking-widest ${titleColor}`}>{name}</span>
+                {isActive && <span className="flex h-1.5 w-1.5 relative"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span></span>}
+              </div>
+              
+              {/* Flexbox avec hauteur fixée (23%) pour forcer le ratio carré de l'enfant (aspect-square) */}
+              <div className="flex-1 min-h-0 flex flex-col items-center justify-end p-1 md:p-1.5 gap-[1px] md:gap-[2px] relative z-10 w-full pb-1.5">
                   {layoutData.enriched.map((row, rIdx) => (
-                    <div key={rIdx} className="flex justify-center items-end w-full flex-1 max-h-[25%] gap-[1px]">
-                      {row.map((cell, cIdx) => (
-                        <div key={cIdx} className="h-full aspect-square max-w-[25%] p-[1px]">
-                            {cell ? (<BlockTile blockId={cell.type} status={isActive ? (cell.linearIndex < progress ? 'done' : (cell.linearIndex === progress ? 'current' : 'upcoming')) : (type === 'bay' ? 'done' : 'upcoming')} isAccessible={false} isSelected={false} />) 
-                            : (<div className="w-full h-full border border-dashed border-white/10 rounded-sm"></div>)}
-                        </div>
-                      ))}
+                    <div key={rIdx} className="flex justify-center items-center gap-[1px] md:gap-[2px] w-full min-h-0" style={{ height: '23%' }}>
+                      {row.map((cell, cIdx) => {
+                        if (!cell) {
+                          return <div key={`${rIdx}-${cIdx}`} className="h-full aspect-square border border-dashed border-white/20 rounded-[2px] bg-white/5 shrink-0"></div>;
+                        }
+                        
+                        const isDone = isActive ? cell.linearIndex < progress : (isBay ? true : false);
+                        const isCurrent = isActive && cell.linearIndex === progress;
+                        
+                        return (
+                          <div key={`${rIdx}-${cIdx}`} className="h-full aspect-square shrink-0 relative">
+                             <BlockTile blockId={cell.type} status={isDone ? 'done' : isCurrent ? 'current' : 'upcoming'} isMini={true} />
+                          </div>
+                        );
+                      })}
                     </div>
                   ))}
               </div>
@@ -302,7 +346,7 @@
               }
           }, [tutorialState?.step, G, activePileIdx, selected]);
 
-          // --- MOTEUR DU TUTORIEL (LÉGALITÉ GARANTIE) ---
+          // --- MOTEUR DU TUTORIEL ---
           const startInteractiveTutorial = () => {
               const tutState = createInitialState();
               tutState.ap = 4;
@@ -316,12 +360,12 @@
 
               tutState.cour = generateInitialCour(); 
               
-              tutState.cour[1][0] = ['M', 'L', 'H'];
-              tutState.cour[3][2] = ['M', 'L', 'H'];
-              tutState.cour[4][0] = ['M', 'H', 'L'];
-              tutState.cour[5][0] = ['M', 'L']; 
-              tutState.cour[1][2] = ['H', 'M', 'L'];
-              tutState.cour[1][3] = ['H', 'M']; 
+              tutState.cour[1][0] = ['M', 'L', 'H']; 
+              tutState.cour[3][2] = ['M', 'L', 'H']; 
+              tutState.cour[4][0] = ['M', 'H', 'L']; 
+              tutState.cour[5][0] = ['M', 'L'];      
+              tutState.cour[1][2] = ['H', 'M', 'L']; 
+              tutState.cour[1][3] = ['H', 'M'];      
               
               tutState.stackers[0] = 0; 
               tutState.stackers[1] = 9; 
@@ -333,7 +377,7 @@
               setMySeat(0);
               setActivePileIdx(0); 
               setIsAIEnabled(false);
-              setTutorialState({ step: 1, active: true, minimized: false });
+              setTutorialState({ step: 0, active: true, minimized: false }); 
               setLobbyMode('game');
           };
 
@@ -536,9 +580,9 @@
                   const activeCrane = draft.cranes[move.target.craneIdx]; activeCrane.progress += 1;
                   let msg = ""; const currentTotal = activeCrane.phase === 'bay' ? activeCrane.bayData.total : activeCrane.deckData.total; let isGameOver = false;
                   if (activeCrane.progress === currentTotal) { if (activeCrane.phase === 'bay') { activeCrane.phase = 'deck'; activeCrane.progress = 0; pointsEarned += 5; msg = `🤖 L'IA a scellé la Baie ${move.target.craneIdx + 1}!`; } else { activeCrane.phase = 'done'; pointsEarned += 10; msg = `🤖 L'IA a terminé le Deck ${move.target.craneIdx + 1}!`; if (draft.cranes.filter(c => c.phase === 'done').length >= 2) isGameOver = true; } } 
-                  else { msg = `🤖 L'IA a posé un [${BLOCK_TYPES[blockId].name}].`; }
+                  else { msg = `🤖 L'IA a posé un conteneur [${BLOCK_TYPES[blockId].name}].`; }
                   draft.players[1].score += pointsEarned;
-                  if (move.machine === 'S') { draft.stackers[1] = move.pIdx; if (draft.stackers[0] === move.pIdx) { draft.stackers[0] = null; msg += " Vous êtes expulsé !"; } } else { draft.transtainer = move.pIdx; if (draft.stackers[0] !== null && Math.abs(draft.stackers[0] - move.pIdx) <= 1) { draft.stackers[0] = null; msg += " L'Aura T vous expulse !"; } if (draft.stackers[1] !== null && Math.abs(draft.stackers[1] - move.pIdx) <= 1) { draft.stackers[1] = null; } }
+                  if (move.machine === 'S') { draft.stackers[1] = move.pIdx; if (draft.stackers[0] === move.pIdx) { draft.stackers[0] = null; msg += " Vous êtes expulsé !"; } } else { draft.transtainer = move.pIdx; if (draft.stackers[0] !== null && Math.abs(draft.stackers[0] - move.pIdx) <= 1) { draft.stackers[0] = null; msg += " La Zone de Sécurité vous expulse !"; } if (draft.stackers[1] !== null && Math.abs(draft.stackers[1] - move.pIdx) <= 1) { draft.stackers[1] = null; } }
                   draft.ap -= (move.moveCost + 1); draft.message = msg;
                   if (isGameOver) { draft.gameStatus = 'gameover'; const winner = draft.players[0].score > draft.players[1].score ? "Vous avez gagné" : "L'IA gagne"; draft.message = `🚨 FIN DE PARTIE ! ${winner} !`; }
               });
@@ -604,7 +648,7 @@
               } else {
                   const targetStacker = tutorialState ? 0 : G.currentPlayer;
                   if (G.stackers[targetStacker] === targetPileIdx) { setSelected(null); return; }
-                  if (Math.abs(targetPileIdx - G.transtainer) <= 1) { setLocalMsg("❌ Bloqué par l'aura du Transtainer."); return; }
+                  if (Math.abs(targetPileIdx - G.transtainer) <= 1) { setLocalMsg("❌ Bloqué par la Zone de Sécurité du Transtainer."); return; }
                   const cost = G.stackers[targetStacker] === null ? 0 : 1;
                   if (G.ap < cost) { setLocalMsg("⚠️ PG Insuffisants."); return; }
                   mutateG(draft => { draft.ap -= cost; draft.stackers[targetStacker] = targetPileIdx; const enemy = targetStacker === 0 ? 1 : 0; let bumped = false; if (draft.stackers[enemy] === targetPileIdx) { draft.stackers[enemy] = null; bumped = true; } draft.message = `🔵 Stacker garé sur P${targetPileIdx+1} (-${cost} PG). ${bumped ? 'Expulsion!' : ''}`; });
@@ -630,13 +674,13 @@
               
               if (hasT) { 
                   setSelected({ type: 'block', machine: 'T', pile: pIdx, col: colIdx }); setLocalMsg(""); 
-                  mutateG(draft => { draft.message = "🟡 Bloc sélectionné (T). Cliquez sur Plan ou case vide pour Shifter."; }); return; 
+                  mutateG(draft => { draft.message = "🟡 Conteneur sélectionné (T). Cliquez sur Plan ou case vide pour Shifter."; }); return; 
               }
               if (hasS) { 
                   const firstCol = getFirstAvailCol(pile); 
                   if (colIdx !== firstCol) { setLocalMsg("❌ Stacker : Extrait uniquement à l'avant."); return; } 
                   setSelected({ type: 'block', machine: 'S', pile: pIdx, col: colIdx }); setLocalMsg(""); 
-                  mutateG(draft => { draft.message = "🔵 Bloc sélectionné (S). Cliquez sur Plan ou pile voisine pour Shifter."; }); 
+                  mutateG(draft => { draft.message = "🔵 Conteneur sélectionné (S). Cliquez sur Plan ou pile voisine pour Shifter."; }); 
               }
           };
 
@@ -722,7 +766,7 @@
           };
 
           const renderMachineToken = (type, player = null, isSelected = false) => {
-            let baseClass = "flex items-center justify-center font-black shadow-md border cursor-pointer transition-transform duration-200 w-full h-full ";
+            let baseClass = "flex items-center justify-center font-black shadow-md border cursor-pointer transition-transform duration-200 w-full h-full shrink-0 ";
             if (isSelected) baseClass += "ring-2 ring-yellow-400 scale-110 shadow-[0_0_15px_rgba(250,204,21,0.8)] z-10 ";
             if (type === 'T') return <div className={`${baseClass} bg-yellow-500 border-black rounded-[4px] text-black text-[clamp(12px,2vh,16px)] leading-none`} title="Transtainer (Commun)">T</div>;
             if (type === 'S') return <div className={`${baseClass} ${player===0 ? 'bg-blue-600' : 'bg-red-600'} border-white rounded-full text-white text-[clamp(12px,2vh,16px)] leading-none`} title={`Stacker J${player+1}`}>S{player+1}</div>;
@@ -740,7 +784,7 @@
                   <div className="flex flex-col items-center justify-center h-full w-full p-4">
                       <div className="max-w-md w-full bg-slate-900 border-2 border-slate-700 p-6 rounded-xl shadow-2xl text-center z-10">
                           <h1 className="text-3xl font-bold text-blue-400 mb-2 uppercase tracking-widest font-sans">Container Rush</h1>
-                          <p className="text-slate-400 mb-6 text-sm">Édition V1.6</p>
+                          <p className="text-slate-400 mb-6 text-sm">Édition V2.6</p>
                           {localMsg && <div className="bg-red-900/50 border border-red-500 text-red-200 p-2 rounded mb-4 text-sm">{localMsg}</div>}
 
                           {lobbyMode === 'menu' && (
@@ -757,6 +801,10 @@
                                       </button>
                                       <button onClick={startInteractiveTutorial} className="w-full mt-3 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-bold py-3 px-4 rounded border border-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.3)] text-sm transition">
                                           🎓 TUTORIEL GUIDÉ
+                                      </button>
+                                      
+                                      <button onClick={() => setShowDevlog(true)} className="w-full mt-4 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-3 px-4 rounded border border-amber-600 shadow-[0_0_10px_rgba(251,191,36,0.2)] text-xs transition">
+                                          📝 JOURNAL DE BORD (MISES À JOUR)
                                       </button>
                                   </div>
                               </div>
@@ -790,7 +838,7 @@
               ============================================= */}
               {G && (
                 <div className="h-full w-full flex flex-col p-1 sm:p-2 gap-1.5 relative">
-                  {/* 1. HEADER (Compact) */}
+                  {/* 1. HEADER (Code Salle Centré) */}
                   <div className="flex-none flex justify-between items-start bg-slate-900 p-1 md:p-2 rounded border border-slate-800 shadow-md">
                     <div className="flex flex-col w-[30%]">
                         <div className={`w-full text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 0 || tutorialState ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500'}`}>J1: {G.players[0].score} PF</div>
@@ -801,7 +849,15 @@
                          {!tutorialState && <button onClick={() => setShowNewGameConfirm(true)} disabled={!canInteract} className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded">🔄</button>}
                          <button onClick={() => setShowRules(true)} className="text-[10px] bg-slate-700 text-blue-300 font-bold px-2 py-0.5 rounded">📖</button>
                       </div>
-                      <div className="flex items-center gap-1">
+                      
+                      {roomId && !tutorialState && (
+                          <div className="flex items-center justify-center gap-2 mt-1 mb-1 w-full">
+                              <span className="text-sm md:text-base text-orange-500 font-black bg-orange-950/50 px-3 py-1 rounded-l border border-orange-600 shadow-sm tracking-widest">CODE : {roomId}</span>
+                              <button onClick={copyRoomCode} className="text-[10px] md:text-xs bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-r font-bold shadow-sm transition h-full border border-orange-600">COPIER</button>
+                          </div>
+                      )}
+                      
+                      <div className="flex items-center gap-1 mt-1">
                         <span className="text-[10px] text-yellow-400 font-bold bg-black px-2 py-0.5 rounded border border-yellow-600">PG: {G.ap}/4</span>
                         {!tutorialState && <button onClick={handleUndo} disabled={!G.history?.length || !canInteract} className="px-1.5 py-0.5 rounded border text-[10px] bg-slate-700 text-white">↩️</button>}
                         <button onClick={endTurn} disabled={!canInteract && !tutorialState} className={`px-2 py-0.5 rounded font-bold text-[10px] bg-red-700 text-white ${getTutoClass('PASS_BTN')}`}>PASSER</button>
@@ -809,39 +865,40 @@
                     </div>
                     <div className="flex flex-col w-[30%] items-end">
                         <div className={`w-full text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 1 && !tutorialState ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-500'}`}>{tutorialState ? 'TUTO' : `J2: ${G.players[1].score} PF`}</div>
-                        
-                        {/* AFFICHAGE DU CODE DE SALLE IN-GAME */}
-                        {roomId && !tutorialState && (
-                            <div className="flex items-center gap-1 mt-1 w-full justify-end">
-                                <span className="text-[10px] text-slate-400 font-bold bg-slate-900 px-1 py-0.5 rounded border border-slate-700">SALLE: {roomId}</span>
-                                <button onClick={copyRoomCode} className="text-[9px] bg-blue-700 hover:bg-blue-600 text-white px-1.5 py-0.5 rounded font-bold shadow-sm transition">COPIER</button>
-                            </div>
-                        )}
                     </div>
                   </div>
 
-                  <div className="flex-none bg-black px-2 py-1 text-center text-green-400 border border-slate-800 rounded text-[clamp(10px,1.8vh,16px)] font-semibold shadow-inner truncate leading-tight">
+                  <div className="flex-none bg-black px-2 py-1 text-center text-emerald-400 border border-slate-800 rounded text-[clamp(10px,1.8vh,16px)] font-semibold shadow-inner truncate leading-tight">
                     {G.message} {localMsg && <span className="text-red-400 ml-2">{localMsg}</span>}
                   </div>
 
                   {/* 2. PLANS (Grues) */}
                   <div className="flex-[1.2] min-h-0 flex flex-row justify-between gap-1 sm:gap-2 w-full">
                     {G.cranes.map((crane, idx) => {
-                      const isDone = crane.phase === 'done'; const reqBlock = getCurrentRequirement(crane);
+                      const isDone = crane.phase === 'done'; 
+                      const reqBlock = getCurrentRequirement(crane);
+                      
                       return (
-                        <div key={crane.id} onClick={() => handleCraneClick(idx)} className={`p-1.5 rounded-lg border flex-1 min-w-0 flex flex-col gap-1 ${isDone ? 'bg-slate-950 border-green-900 opacity-60' : crane.phase === 'bay' ? 'bg-slate-900 border-slate-600' : 'bg-[#0b1736] border-blue-500'} ${getTutoClass('CRANE_'+idx)}`}>
-                          <div className="flex justify-between items-center z-10 border-b border-white/10 pb-0.5 flex-none pointer-events-none">
-                              <span className="font-bold text-[clamp(9px,1.5vh,14px)] text-white truncate leading-none">{crane.name}</span>
-                              <div className="w-[20%] max-w-[25px] aspect-square flex-none">
-                                 {!isDone && <BlockTile blockId={reqBlock} isAccessible={false} isSelected={false} status="normal" />}
+                        <div key={crane.id} onClick={() => handleCraneClick(idx)} className={`p-1 md:p-1.5 rounded-xl border-2 flex-1 min-w-0 flex flex-col gap-1 md:gap-1.5 ${isDone ? 'bg-slate-950 border-emerald-900 opacity-70' : 'bg-slate-800 border-slate-600 hover:border-slate-400 cursor-pointer shadow-xl'} ${getTutoClass('CRANE_'+idx)} transition-colors`}>
+                          
+                          {/* En-tête Grue */}
+                          <div className="flex justify-between items-center z-10 border-b border-white/10 pb-1 flex-none pointer-events-none shrink-0">
+                              <span className="font-bold text-[9px] md:text-[11px] text-white truncate tracking-wider">{crane.name}</span>
+                              <div className="w-[18px] md:w-[22px] aspect-square flex-none shrink-0">
+                                 {!isDone && reqBlock && <BlockTile blockId={reqBlock} isAccessible={false} isSelected={false} status="normal" isMini={true} />}
                               </div>
                           </div>
+                          
+                          {/* Cartes Baie et Deck */}
                           {!isDone ? (
-                            <div className="flex-1 min-h-0 flex flex-col gap-1 justify-center pointer-events-none">
-                                <MiniMap layoutData={crane.deckData} progress={crane.phase === 'deck' ? crane.progress : 0} type="deck" isActive={crane.phase === 'deck'} name="DECK" />
-                                <MiniMap layoutData={crane.bayData} progress={crane.phase === 'bay' ? crane.progress : crane.bayData.total} type="bay" isActive={crane.phase === 'bay'} name="BAIE" />
+                            <div className="flex-1 min-h-0 flex flex-col gap-1.5 justify-center pointer-events-none">
+                                <div className="flex-1 min-h-0 w-full"><MiniMap layoutData={crane.deckData} progress={crane.phase === 'deck' ? crane.progress : 0} type="deck" isActive={crane.phase === 'deck'} name="DECK" /></div>
+                                <div className="flex-1 min-h-0 w-full"><MiniMap layoutData={crane.bayData} progress={crane.phase === 'bay' ? crane.progress : crane.bayData.total} type="bay" isActive={crane.phase === 'bay'} name="BAIE" /></div>
                             </div>
-                          ) : (<div className="flex-1 flex items-center justify-center text-green-600 font-bold text-[clamp(12px,2.5vh,24px)] pointer-events-none">SCELLÉ</div>)}
+                          ) : (
+                            <div className="flex-1 flex items-center justify-center text-emerald-600 font-black text-lg md:text-2xl pointer-events-none tracking-widest drop-shadow-md">SCELLÉ</div>
+                          )}
+                          
                         </div>
                       );
                     })}
@@ -851,15 +908,15 @@
                   <div className="flex-none bg-slate-900 border border-slate-700 rounded-lg p-1.5 flex items-center justify-between shadow-md">
                       <div className="flex gap-2 w-full justify-around h-[5vh] max-h-[40px] min-h-[30px]">
                           <div onClick={() => handleMachineSelect('S', 0)} className={`flex items-center gap-1 w-1/4 max-w-[100px] rounded ${getTutoClass('FLEET_S0')}`}>
-                              <div className="h-full aspect-square pointer-events-none">{renderMachineToken('S', 0, selected?.type==='machine' && selected.id===0)}</div>
+                              <div className="h-full aspect-square shrink-0 pointer-events-none">{renderMachineToken('S', 0, selected?.type==='machine' && selected.id===0)}</div>
                               <span className="text-[clamp(9px,1.4vh,12px)] text-slate-500 hidden sm:block truncate pointer-events-none">{G.stackers[0]===null ? 'Spelo' : `P${G.stackers[0]+1}`}</span>
                           </div>
                           <div onClick={() => handleMachineSelect('S', 1)} className="flex items-center gap-1 w-1/4 max-w-[100px]">
-                              <div className="h-full aspect-square pointer-events-none">{renderMachineToken('S', 1, selected?.type==='machine' && selected.id===1)}</div>
+                              <div className="h-full aspect-square shrink-0 pointer-events-none">{renderMachineToken('S', 1, selected?.type==='machine' && selected.id===1)}</div>
                               <span className="text-[clamp(9px,1.4vh,12px)] text-slate-500 hidden sm:block truncate pointer-events-none">{G.stackers[1]===null ? 'Spelo' : `P${G.stackers[1]+1}`}</span>
                           </div>
                           <div onClick={() => handleMachineSelect('T', 'T')} className={`flex items-center gap-1 w-1/4 max-w-[100px] rounded ${getTutoClass('FLEET_T')}`}>
-                              <div className="h-full aspect-square pointer-events-none">{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>
+                              <div className="h-full aspect-square shrink-0 pointer-events-none">{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>
                           </div>
                           <div className="border-l border-slate-700 pl-2 flex items-center justify-center flex-1">
                               <button onClick={handleVoluntarySpelo} className="flex flex-col items-center justify-center bg-slate-800 border border-slate-600 rounded px-2 h-full w-full max-w-[100px]">
@@ -927,9 +984,9 @@
                           
                           {/* Parking Detail */}
                           <div className={`w-[15vw] max-w-[70px] h-[65%] flex flex-col justify-end items-center pb-2 rounded border-b-4 bg-slate-800 cursor-pointer ${Math.abs(G.transtainer - activePileIdx) <= 1 ? 'border-red-700 bg-red-950/30' : 'border-slate-500'}`} onClick={() => handleParkingClick(activePileIdx)}>
-                              {G.transtainer === activePileIdx && <div className={`w-[85%] max-w-[50px] aspect-square mb-1.5 rounded ${getTutoClass('PARKING_T', activePileIdx)}`} onClick={(e) => { e.stopPropagation(); handleMachineSelect('T', 'T'); }}>{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>}
-                              {G.stackers[0] === activePileIdx && <div className="w-[85%] max-w-[50px] aspect-square mb-1.5" onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 0); }}>{renderMachineToken('S', 0, selected?.type==='machine' && selected.id===0)}</div>}
-                              {G.stackers[1] === activePileIdx && <div className="w-[85%] max-w-[50px] aspect-square mb-1.5" onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 1); }}>{renderMachineToken('S', 1, selected?.type==='machine' && selected.id===1)}</div>}
+                              {G.transtainer === activePileIdx && <div className={`w-[85%] max-w-[50px] aspect-square mb-1.5 rounded shrink-0 ${getTutoClass('PARKING_T', activePileIdx)}`} onClick={(e) => { e.stopPropagation(); handleMachineSelect('T', 'T'); }}>{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>}
+                              {G.stackers[0] === activePileIdx && <div className="w-[85%] max-w-[50px] aspect-square mb-1.5 shrink-0" onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 0); }}>{renderMachineToken('S', 0, selected?.type==='machine' && selected.id===0)}</div>}
+                              {G.stackers[1] === activePileIdx && <div className="w-[85%] max-w-[50px] aspect-square mb-1.5 shrink-0" onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 1); }}>{renderMachineToken('S', 1, selected?.type==='machine' && selected.id===1)}</div>}
                               {G.stackers[0] !== activePileIdx && G.stackers[1] !== activePileIdx && G.transtainer !== activePileIdx && <span className="text-[clamp(8px,1.5vh,12px)] text-slate-500 pointer-events-none">PARK</span>}
                           </div>
 
@@ -952,14 +1009,14 @@
                                               }
 
                                               return (
-                                                  <div key={bIdx} className="w-full aspect-square mb-1 pointer-events-none">
+                                                  <div key={bIdx} className="w-full aspect-square mb-1 shrink-0">
                                                         <BlockTile blockId={blockId} isSelected={isTopBlock && selected?.type === 'block' && selected.pile === activePileIdx && selected.col === cIdx} isAccessible={isAccessible} status="normal" />
                                                   </div>
                                               );
                                           })}
                                           {/* Helper Visuel Shift Transtainer */}
                                           {selected?.type === 'block' && selected.machine === 'T' && selected.pile === activePileIdx && col.length < 3 && (
-                                              <div className={`w-full aspect-square border border-dashed border-yellow-400/50 rounded mt-1 flex items-center justify-center bg-yellow-400/10 ${getTutoClass('DETAIL_SHIFT_' + cIdx, activePileIdx)}`}>
+                                              <div className={`w-full aspect-square shrink-0 border border-dashed border-yellow-400/50 rounded mt-1 flex items-center justify-center bg-yellow-400/10 ${getTutoClass('DETAIL_SHIFT_' + cIdx, activePileIdx)}`}>
                                                   <span className="text-[clamp(10px,2vh,16px)] text-yellow-200 pointer-events-none">⬇️</span>
                                               </div>
                                           )}
@@ -974,7 +1031,7 @@
                   {/* BULLE DU TUTORIEL (EN HAUT) */}
                   {tutorialState && tutorialState.active && currentStepData && (
                     tutorialState.minimized ? (
-                      <button onClick={() => setTutorialState(prev => ({...prev, minimized: false}))} className="absolute top-16 right-4 bg-emerald-600 border-2 border-white text-white px-4 py-2 rounded-full font-bold shadow-lg z-[100] animate-pulse">
+                      <button onClick={() => setTutorialState(prev => ({...prev, minimized: false}))} className="absolute top-24 right-4 bg-emerald-600 border-2 border-white text-white px-4 py-2 rounded-full font-bold shadow-lg z-[100] animate-pulse">
                           [+] Afficher Tuto ({tutorialState.step})
                       </button>
                     ) : currentStepData.type === 'ai_turn' || currentStepData.type === 'info' ? (
@@ -996,7 +1053,7 @@
                             </div>
                         </div>
                     ) : (
-                      <div className="absolute top-[12vh] left-1/2 transform -translate-x-1/2 bg-slate-900 border-2 border-emerald-400 p-4 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.8)] z-[100] w-11/12 max-w-lg text-center flex flex-col items-center">
+                      <div className="absolute top-[18vh] left-1/2 transform -translate-x-1/2 bg-slate-900 border-2 border-emerald-400 p-4 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.8)] z-[100] w-11/12 max-w-lg text-center flex flex-col items-center">
                           <div className="flex justify-between items-center w-full mb-2 border-b border-slate-700 pb-1">
                               <h3 className="text-emerald-300 font-black text-xs tracking-widest uppercase">Étape {tutorialState.step} / {TUTORIAL_STEPS.length - 1}</h3>
                               <button onClick={() => setTutorialState(prev => ({...prev, minimized: true}))} className="text-slate-400 hover:text-white font-bold px-2 py-1 bg-slate-800 rounded text-xs border border-slate-600">[-] Réduire</button>
@@ -1020,12 +1077,12 @@
                     
                     {/* Rappel Visuel des Points de Fret (PF) */}
                     <div className="bg-slate-800 p-3 rounded-lg mb-4 text-xs sm:text-sm font-bold flex flex-wrap gap-2 justify-center border border-slate-700 shadow-inner">
-                        <span className="bg-slate-900 px-2 py-1 rounded">⬜ Léger: <span className="text-yellow-400">1 PF</span></span>
-                        <span className="bg-slate-900 px-2 py-1 rounded">🔲 Moyen: <span className="text-yellow-400">2 PF</span></span>
-                        <span className="bg-slate-900 px-2 py-1 rounded">⬛ Lourd: <span className="text-yellow-400">1 PF</span></span>
-                        <span className="bg-slate-900 px-2 py-1 rounded">❄️ Reef: <span className="text-yellow-400">3 PF</span></span>
-                        <span className="bg-slate-900 px-2 py-1 rounded">☢️ Haz: <span className="text-yellow-400">4 PF</span></span>
-                        <span className="bg-slate-900 px-2 py-1 rounded">♊ Twin: <span className="text-yellow-400">5 PF</span></span>
+                        <span className="bg-slate-900 px-2 py-1 rounded border-2 border-slate-300">⬜ Léger: <span className="text-yellow-400">1 PF</span></span>
+                        <span className="bg-slate-900 px-2 py-1 rounded border-2 border-slate-500">🔲 Moyen: <span className="text-yellow-400">2 PF</span></span>
+                        <span className="bg-slate-900 px-2 py-1 rounded border-2 border-black">⬛ Lourd: <span className="text-yellow-400">1 PF</span></span>
+                        <span className="bg-slate-900 px-2 py-1 rounded border-2 border-cyan-800">❄️ Reef: <span className="text-yellow-400">3 PF</span></span>
+                        <span className="bg-slate-900 px-2 py-1 rounded border-2 border-orange-500">☢️ Haz: <span className="text-yellow-400">4 PF</span></span>
+                        <span className="bg-slate-900 px-2 py-1 rounded border-2 border-green-800">♊ Twin: <span className="text-yellow-400">5 PF</span></span>
                     </div>
 
                     <ul className="space-y-4 mb-4">
@@ -1034,9 +1091,39 @@
                         <li><strong className="text-blue-400">VUE DÉTAILLÉE (Bas) :</strong> Cliquez sur les conteneurs entourés de <span className="text-cyan-400 font-bold">cyan</span> pour les extraire.</li>
                     </ul>
                     <p className="mb-4 bg-slate-800 p-3 rounded"><strong className="text-white">COÛTS :</strong> Vous avez 4 PG par tour. Bouger coûte 1 PG. Extraire et Poser coûte 1 PG.</p>
-                    <p className="text-red-400 font-bold border-l-4 border-red-500 pl-3">AURA DU TRANSTAINER : La pile où se trouve le T et ses 2 voisines sont interdites aux Stackers (Expulsion en Spelo !)</p>
+                    <p className="text-red-400 font-bold border-l-4 border-red-500 pl-3">ZONE DE SÉCURITÉ DU TRANSTAINER : La pile où se trouve le T et ses 2 voisines sont interdites aux Stackers (Expulsion en Spelo !)</p>
                   </div>
                 </div>
+              )}
+
+              {/* MODAL DU JOURNAL DE BORD (DEVLOG) */}
+              {showDevlog && (
+                  <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border-2 border-slate-700 rounded-xl max-w-2xl w-full max-h-[90dvh] overflow-y-auto p-6 shadow-2xl relative text-[clamp(12px,1.8vh,16px)] text-slate-300 text-left">
+                      <button onClick={() => setShowDevlog(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-sm">FERMER</button>
+                      <h2 className="text-2xl font-bold text-emerald-400 mb-6 border-b border-slate-700 pb-2 font-sans tracking-widest uppercase">📝 Journal de Bord</h2>
+                      <div className="space-y-6">
+                          <div>
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-emerald-600 text-white px-2 py-0.5 rounded text-xs">V5.3</span> Correction Visuelle des Cartes</h3>
+                              <ul className="list-disc pl-5 mt-2 text-sm space-y-1 text-slate-400">
+                                  <li>Refonte du composant des cartes Pré-Plan. Utilisation de la technologie Flexbox avec une hauteur mathématique proportionnelle pour garantir que les conteneurs forment toujours des cubes parfaits, sans déborder ni s'aplatir.</li>
+                              </ul>
+                          </div>
+                          <div>
+                              <h3 className="text-lg font-bold text-slate-300">V5.2 - Cartes Premium HD</h3>
+                              <ul className="list-disc pl-5 mt-2 text-sm space-y-1 text-slate-400">
+                                  <li>Ajout des textures et de l'aspect 3D sur les blocs pour mimer la sensation du vrai jeu de plateau.</li>
+                              </ul>
+                          </div>
+                          <div>
+                              <h3 className="text-lg font-bold text-slate-300">V5.1 - Ergonomie Multijoueur</h3>
+                              <ul className="list-disc pl-5 mt-2 text-sm space-y-1 text-slate-400">
+                                  <li>Le code de la salle en ligne a été agrandi, centré et mis en orange vif pour faciliter le partage entre joueurs.</li>
+                              </ul>
+                          </div>
+                      </div>
+                    </div>
+                  </div>
               )}
 
               {/* MODALS CONFIRM */}
