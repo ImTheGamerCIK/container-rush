@@ -197,6 +197,45 @@
             return code;
         };
 
+        // --- LE SCRIPT DU TUTORIEL GUIDÉ ---
+        const TUTORIAL_STEPS = [
+            { type: 'info', title: 'Le But du Jeu', text: 'Bienvenue sur le terminal ! Le but du jeu est d\'accumuler le maximum de Points de Fret (PF) en chargeant le navire selon des plans stricts.' },
+            { type: 'info', title: 'Les Points de Fret', text: 'Chaque conteneur rapporte des points différents : Lourd=1 PF, Moyen=2 PF, jusqu\'au Twin=5 PF ! La Grue 1 (B01) demande 2 Lourds (Noirs) pour commencer. Suivez le halo vert !' },
+            
+            // TOUR 1
+            { type: 'action', target: 'FLEET_S0', actionType: 'select_machine', args: ['S', 0], text: 'TOUR 1. Vous disposez de 4 Points Grue (PG) par tour. Ces PG représentent votre énergie d\'action ! Sélectionnez votre Stacker (S1) bleu dans la flotte en haut.' },
+            { type: 'action', target: 'NAV_1', actionType: 'move_machine', args: [1], text: 'Les machines sont essentielles : sans elles au parking d\'une pile, impossible d\'interagir ! Garez le Stacker sur la Pile 2 dans le Navigateur central (-1 PG).' },
+            { type: 'action', target: 'DETAIL_COL_0', targetPile: 1, actionType: 'select_block', args: [0], text: 'Le Stacker (S) ne prend QUE le conteneur à l\'avant. Cliquez sur le conteneur Lourd (Noir) dans la vue détaillée.' },
+            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Pour envoyer ce conteneur au navire, cliquez sur la Grue 1. Cela valide le chargement et démarre la fondation (-1 PG) !' },
+            
+            { type: 'action', target: 'FLEET_T', actionType: 'select_machine', args: ['T', 'T'], text: 'Il vous reste 2 PG. Sélectionnez le grand Transtainer (T) jaune.' },
+            { type: 'action', target: 'NAV_3', actionType: 'move_machine', args: [3], text: 'Le Transtainer est puissant, mais chaque déplacement coûte de précieux PG qui auraient pu servir à envoyer des conteneurs ! Déplacez-le sur la Pile 4 (-1 PG).' },
+            { type: 'action', target: 'DETAIL_COL_2', targetPile: 3, actionType: 'select_block', args: [2], text: 'Contrairement au Stacker, le Transtainer peut plonger pour prendre n\'importe quel conteneur au sommet. Prenez le conteneur Lourd (Noir) de la 3ème colonne.' },
+            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Envoyez-le sur la Grue 1 (-1 PG). La fondation A est prête !' },
+            { type: 'action', target: 'PASS_BTN', actionType: 'pass_turn', args: [], text: 'Vos 4 PG sont épuisés. Cliquez sur PASSER (bouton rouge).' },
+            
+            // TOUR IA
+            { type: 'ai_turn', title: 'Tour de l\'IA', text: 'Tour de l\'IA : L\'IA déplace le Transtainer sur la Pile 2. Attention : Le Transtainer impose une Zone de Sécurité sur sa pile et les deux voisines. Votre Stacker s\'y trouvait : il est expulsé en Zone Spelo pour sa sécurité !', execute: (draft) => { draft.transtainer = 1; draft.stackers[0] = null; draft.message="La Zone de Sécurité vous expulse en Spelo !"; draft.ap = 4; } },
+            
+            // TOUR 2
+            { type: 'action', target: 'FLEET_S0', actionType: 'select_machine', args: ['S', 0], text: 'TOUR 2 (4 PG). Votre Stacker est en Spelo. Sélectionnez-le.' },
+            { type: 'action', target: 'NAV_4', actionType: 'move_machine', args: [4], text: 'SORTIR du Spelo coûte 0 PG ! Garez-vous sur la Pile 5.' },
+            { type: 'action', target: 'DETAIL_COL_0', targetPile: 4, actionType: 'select_block', args: [0], text: 'Le niveau B demande un Lourd (Noir), bloqué par un Léger (Blanc) à l\'avant. Prenez le Blanc.' },
+            { type: 'action', target: 'NAV_5', actionType: 'shift_nav', args: [5], text: 'SHIFTAGE STACKER : Un Stacker shifte uniquement vers une pile voisine ! Cliquez sur la Pile 6 pour y jeter le Blanc (-1 PG). Vous pouvez aussi utiliser ce coup pour bloquer un joueur !' },
+            { type: 'action', target: 'DETAIL_COL_0', targetPile: 4, actionType: 'select_block', args: [0], text: 'Le conteneur Lourd (Noir) est dégagé ! Prenez-le.' },
+            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Envoyez-le sur la Grue 1 (-1 PG).' },
+            
+            { type: 'action', target: 'NAV_1', actionType: 'navigate', args: [1], text: 'Il vous reste 2 PG. Cliquez sur la Pile 2 dans le Navigateur pour y observer le Transtainer.' },
+            { type: 'action', target: 'PARKING_T', targetPile: 1, actionType: 'select_machine', args: ['T', 'T'], text: 'Sélectionnez le Transtainer en cliquant sur son jeton directement garé dans le parking en bas !' },
+            { type: 'action', target: 'DETAIL_COL_2', targetPile: 1, actionType: 'select_block', args: [2], text: 'La Grue 1 veut ensuite un Moyen (Gris), bloqué par un Léger (Blanc). Prenez le Blanc.' },
+            { type: 'action', target: 'DETAIL_SHIFT_3', targetPile: 1, actionType: 'shift_detail', args: [3], text: 'SHIFTAGE TRANSTAINER : Le T shifte dans sa PROPRE pile. Cliquez sur la flèche ⬇️ de la colonne vide à côté (-1 PG).' },
+            { type: 'action', target: 'DETAIL_COL_2', targetPile: 1, actionType: 'select_block', args: [2], text: 'Prenez le conteneur Moyen (Gris) maintenant accessible.' },
+            { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: 'Envoyez-le sur la Grue 1 (-1 PG). La structure monte !' },
+            { type: 'action', target: 'PASS_BTN', actionType: 'pass_turn', args: [], text: 'Tour terminé, cliquez sur PASSER.' },
+            
+            { type: 'info', title: 'Tutoriel Terminé !', text: 'Vous maîtrisez la légalité des poses, la sélection via le parking, le shiftage, et la Zone de Sécurité. Le port vous appartient !', action: 'end' }
+        ];
+
         // --- COMPOSANTS DE RENDU PREMIUM ---
         
         // 1. La Tuile Conteneur (Volume 3D, Verrouillage Cube)
@@ -319,6 +358,10 @@
           const [isAIEnabled, setIsAIEnabled] = useState(false);
           const [aiDifficulty, setAiDifficulty] = useState('moyen');
 
+          // Tutoriel Actif & Snapshots
+          const [tutorialState, setTutorialState] = useState(null); 
+          const [tutorialSnapshots, setTutorialSnapshots] = useState({});
+
           useEffect(() => {
             if (!auth) { setIsAuthLoading(false); return; }
             const initAuth = async () => {
@@ -334,7 +377,7 @@
 
           useEffect(() => {
               // Abonnement uniquement pour le mode multi
-              if (!user || !roomId || !db || G?.gameMode === 'solo') return; 
+              if (!user || !roomId || !db || G?.gameMode === 'solo' || tutorialState) return; 
               const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId);
               const unsubscribe = onSnapshot(docRef, (snap) => {
                   if (snap.exists()) {
@@ -347,7 +390,26 @@
                   }
               });
               return () => unsubscribe();
-          }, [user, roomId]);
+          }, [user, roomId, tutorialState]);
+
+          // --- SAUVEGARDE DU TUTORIEL (SNAPSHOTS) ---
+          useEffect(() => {
+              if (tutorialState && tutorialState.active && G) {
+                  setTutorialSnapshots(prev => {
+                      if (!prev[tutorialState.step]) {
+                          return { 
+                              ...prev, 
+                              [tutorialState.step]: { 
+                                  G: JSON.parse(JSON.stringify(G)), 
+                                  activePileIdx, 
+                                  selected: selected ? JSON.parse(JSON.stringify(selected)) : null 
+                              } 
+                          };
+                      }
+                      return prev;
+                  });
+              }
+          }, [tutorialState?.step, G, activePileIdx, selected]);
 
           // --- LEADERBOARD FETCH ---
           const fetchLeaderboard = async (levelId) => {
@@ -419,7 +481,7 @@
               initialState.message = "Salle créée. En attente J2...";
               try {
                   await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code), { payload: JSON.stringify(initialState) });
-                  setMySeat(0); setIsAIEnabled(false); setRoomId(code); setLocalMsg(""); setActivePileIdx(0);
+                  setMySeat(0); setIsAIEnabled(false); setRoomId(code); setLocalMsg(""); setActivePileIdx(0); setTutorialState(null);
               } catch (e) { setLocalMsg("Erreur Firebase."); }
           };
 
@@ -430,13 +492,13 @@
               try {
                   const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', code));
                   if (snap.exists()) {
-                      setMySeat(1); setIsAIEnabled(false); setRoomId(code); setLocalMsg(""); setActivePileIdx(0);
+                      setMySeat(1); setIsAIEnabled(false); setRoomId(code); setLocalMsg(""); setActivePileIdx(0); setTutorialState(null);
                   } else setLocalMsg("Code introuvable.");
               } catch (e) {}
           };
 
           const startLocalGame = (withAI) => {
-              setRoomId(null); setG(createInitialState('multi')); setMySeat(0); setActivePileIdx(0); setIsAIEnabled(withAI);
+              setRoomId(null); setG(createInitialState('multi')); setMySeat(0); setActivePileIdx(0); setIsAIEnabled(withAI); setTutorialState(null);
           };
 
           const startSoloGame = (levelId) => {
@@ -447,8 +509,88 @@
               initialState.pgUsed = 0;
               initialState.message = `Niveau ${levelId} - Le temps presse, superviseur !`;
               
-              setRoomId(null); setG(initialState); setMySeat(0); setActivePileIdx(0); setIsAIEnabled(false); setLobbyMode('game');
-          }
+              setRoomId(null); setG(initialState); setMySeat(0); setActivePileIdx(0); setIsAIEnabled(false); setLobbyMode('game'); setTutorialState(null);
+          };
+
+          // --- MOTEUR DU TUTORIEL ---
+          const startInteractiveTutorial = () => {
+              const tutState = createInitialState('multi', 1);
+              tutState.ap = 4;
+              tutState.message = "🎓 TUTORIEL : Suivez le halo vert !";
+              
+              tutState.cranes[0].bayData = enrichLayout(BAYS_DATABASE[0].layout); 
+              tutState.cranes[0].deckData = enrichLayout(DECKS_DATABASE[0].layout);
+              tutState.cranes[0].name = "GRUE 1";
+              tutState.cranes[0].phase = 'bay';
+              tutState.cranes[0].progress = 0;
+
+              tutState.cour = generateInitialCour(1); 
+              
+              // Blocs forcés pour scénario
+              tutState.cour[1][0] = ['M', 'L', 'H']; 
+              tutState.cour[3][2] = ['M', 'L', 'H']; 
+              tutState.cour[4][0] = ['M', 'H', 'L']; 
+              tutState.cour[5][0] = ['M', 'L'];      
+              tutState.cour[1][2] = ['H', 'M', 'L']; 
+              tutState.cour[1][3] = ['H', 'M'];      
+              
+              tutState.stackers[0] = 0; 
+              tutState.stackers[1] = 9; 
+              tutState.transtainer = 4; 
+              
+              setTutorialSnapshots({}); 
+              setG(tutState);
+              setRoomId(null);
+              setMySeat(0);
+              setActivePileIdx(0); 
+              setIsAIEnabled(false);
+              setTutorialState({ step: 0, active: true, minimized: false }); 
+              setLobbyMode('game');
+          };
+
+          const processTutorialAction = (actionType, args) => {
+              if (!tutorialState || !tutorialState.active) return true; 
+              const stepData = TUTORIAL_STEPS[tutorialState.step];
+              if (stepData && stepData.type !== 'action') return false; 
+              
+              if (stepData && stepData.actionType === actionType) {
+                  let match = true;
+                  for(let i=0; i<args.length; i++) {
+                      if (args[i] !== stepData.args[i]) match = false;
+                  }
+                  if (match) {
+                      setTimeout(() => setTutorialState(prev => ({...prev, step: prev.step + 1})), 100);
+                      return true;
+                  }
+              }
+              setLocalMsg("❌ Action incorrecte. Suivez le halo vert (ou utilisez Recommencer l'étape).");
+              setTimeout(() => setLocalMsg(""), 2500);
+              return false;
+          };
+
+          const resetTutorialSelection = () => {
+              if (tutorialState && tutorialSnapshots[tutorialState.step]) {
+                  const snap = tutorialSnapshots[tutorialState.step];
+                  setG(snap.G);
+                  setActivePileIdx(snap.activePileIdx);
+                  setSelected(snap.selected);
+                  setLocalMsg("⏪ L'étape a été réinitialisée.");
+                  setTimeout(() => setLocalMsg(""), 2500);
+              }
+          };
+
+          const getTutoClass = (targetId, currentPileIdx = null) => {
+              if (tutorialState && tutorialState.active) {
+                  const stepData = TUTORIAL_STEPS[tutorialState.step];
+                  if (stepData && stepData.type === 'action' && stepData.target === targetId) {
+                      if (stepData.targetPile !== undefined && stepData.targetPile !== currentPileIdx) {
+                          return ''; 
+                      }
+                      return ' ring-4 ring-emerald-400 ring-offset-2 ring-offset-slate-900 animate-pulse z-[60] relative pointer-events-auto ';
+                  }
+              }
+              return '';
+          };
 
           const createInitialState = (mode = 'multi', seed = null) => ({
               gameMode: mode, cour: generateInitialCour(seed), cranes: getRandomCranes(seed), 
@@ -457,10 +599,10 @@
               gameStatus: 'playing', message: "À vous de jouer.", history: []
           });
 
-          const returnToMenu = () => { setG(null); setRoomId(null); setMySeat(0); setLocalMsg(""); setLobbyMode('menu'); };
+          const returnToMenu = () => { setG(null); setRoomId(null); setMySeat(0); setLocalMsg(""); setLobbyMode('menu'); setTutorialState(null); };
 
           const handleRestartGame = async () => {
-              if (!canInteract) return;
+              if (!canInteract || tutorialState) return;
               if (G.gameMode === 'solo') {
                   startSoloGame(G.levelId);
                   return;
@@ -479,13 +621,13 @@
               newG.history = newG.history || []; newG.history.push(historySnapshot);
               if (newG.history.length > 5) newG.history.shift(); 
               mutatorFn(newG); setG(newG);
-              if (roomId && db && user && newG.gameMode !== 'solo') {
+              if (roomId && db && user && newG.gameMode !== 'solo' && !tutorialState) {
                   try { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), { payload: JSON.stringify(newG) }); } catch(e){}
               }
           };
 
           // En solo, on est toujours le joueur actif
-          const isMyTurn = G?.gameMode === 'solo' || G?.currentPlayer === mySeat;
+          const isMyTurn = G?.gameMode === 'solo' || G?.currentPlayer === mySeat || tutorialState !== null;
           const canInteract = G?.gameStatus === 'playing' && (!roomId || isMyTurn);
 
           const getFirstAvailCol = (pile) => { for(let c=0; c<4; c++) if(pile[c].length > 0) return c; return -1; };
@@ -504,7 +646,7 @@
 
           // --- IA MULTIJOUEUR (Désactivée en Solo) ---
           const executeAITurn = () => {
-            if (!G || G.gameMode === 'solo') return;
+            if (!G || G.gameMode === 'solo' || tutorialState) return;
             let requirements = []; G.cranes.forEach((crane, idx) => { if (crane.phase !== 'done') requirements.push({ blockId: getCurrentRequirement(crane), craneIdx: idx }); });
             let candidates = [];
             for (let p = 0; p < 10; p++) {
@@ -557,7 +699,7 @@
             if (aiDifficulty !== 'facile' && G.ap >= 2 && G.stackers[1] !== null) applyAISpelo();
             else mutateG(draft => { draft.ap = 0; });
           };
-          useEffect(() => { if (G && isAIEnabled && G.currentPlayer === 1 && G.gameStatus === 'playing' && G.gameMode !== 'solo') { const timer = setTimeout(() => { if (G.ap > 0) executeAITurn(); else endTurn(); }, 1200); return () => clearTimeout(timer); } }, [G, isAIEnabled, aiDifficulty]);
+          useEffect(() => { if (G && isAIEnabled && G.currentPlayer === 1 && G.gameStatus === 'playing' && G.gameMode !== 'solo' && !tutorialState) { const timer = setTimeout(() => { if (G.ap > 0) executeAITurn(); else endTurn(); }, 1200); return () => clearTimeout(timer); } }, [G, isAIEnabled, aiDifficulty, tutorialState]);
 
           const applyAIPose = (move) => {
               mutateG(draft => {
@@ -582,7 +724,9 @@
             if (selected && selected.type === 'machine' && selected.id === id) { setSelected(null); setLocalMsg("Sélection annulée."); return; }
             
             // En Solo, on a accès aux deux Stackers. En Multi, seulement le sien.
-            if (G.gameMode !== 'solo' && type === 'S' && id !== G.currentPlayer) { setLocalMsg("❌ Sélectionnez VOTRE Stacker."); return; }
+            if (G.gameMode !== 'solo' && type === 'S' && id !== G.currentPlayer && !tutorialState) { setLocalMsg("❌ Sélectionnez VOTRE Stacker."); return; }
+
+            if (!processTutorialAction('select_machine', [type, id])) return;
 
             setSelected({ type: 'machine', id }); setLocalMsg("");
             mutateG(draft => { draft.message = type === 'T' ? "🟡 TRANSTAINER : Cliquez sur une Pile du Navigateur pour le déplacer." : "🔵 STACKER : Cliquez sur une Pile du Navigateur pour le déplacer."; });
@@ -590,6 +734,16 @@
 
           const handlePileNavigatorClick = (pIdx) => {
               if (!canInteract) { setActivePileIdx(pIdx); return; }
+
+              if (tutorialState && tutorialState.active) {
+                  const stepData = TUTORIAL_STEPS[tutorialState.step];
+                  if (stepData && stepData.actionType === 'navigate') {
+                      if (processTutorialAction('navigate', [pIdx])) {
+                          setActivePileIdx(pIdx);
+                      }
+                      return;
+                  }
+              }
 
               if (selected?.type === 'machine') { handleMachineMove(pIdx); setActivePileIdx(pIdx); return; }
               
@@ -603,10 +757,17 @@
                   setActivePileIdx(pIdx); return; 
               }
 
+              if (tutorialState && tutorialState.active && selected === null) {
+                  setLocalMsg("❌ Action incorrecte. Suivez le halo vert.");
+                  return;
+              }
+
               setActivePileIdx(pIdx);
           };
 
           const handleMachineMove = (targetPileIdx) => {
+              if (!processTutorialAction('move_machine', [targetPileIdx])) return;
+
               if (selected.id === 'T') {
                   const dist = Math.abs(targetPileIdx - G.transtainer);
                   if (dist === 0) { setSelected(null); return; }
@@ -650,12 +811,14 @@
                   handleShiftDestination(pIdx, colIdx); return; 
               }
               
+              if (!processTutorialAction('select_block', [colIdx])) return;
+
               const pile = G.cour[pIdx]; if (pile[colIdx].length === 0) return;
               
               const hasT = (G.transtainer === pIdx); 
               // En Solo on peut utiliser S1 ou S2 s'ils sont sur la pile. En Multi, seulement le sien.
-              const hasS0 = (G.stackers[0] === pIdx) && (G.gameMode === 'solo' || G.currentPlayer === 0);
-              const hasS1 = (G.stackers[1] === pIdx) && (G.gameMode === 'solo' || G.currentPlayer === 1);
+              const hasS0 = (G.stackers[0] === pIdx) && (G.gameMode === 'solo' || G.currentPlayer === 0 || tutorialState);
+              const hasS1 = (G.stackers[1] === pIdx) && (G.gameMode === 'solo' || G.currentPlayer === 1 || tutorialState);
               const hasS = hasS0 || hasS1;
 
               if (!hasT && !hasS) { setLocalMsg("❌ Amenez une machine ici pour interagir."); return; }
@@ -679,11 +842,13 @@
                 if (targetPileIdx !== selected.pile) { setLocalMsg("❌ Transtainer : Shift dans SA Pile."); return; } 
                 if (targetColIdx === null) { setLocalMsg("❌ Cliquez sur la colonne cible en bas."); return; } 
                 if (G.cour[targetPileIdx][targetColIdx].length >= 3) { setLocalMsg("❌ Colonne pleine."); return; } 
+                if (!processTutorialAction('shift_detail', [targetColIdx])) return;
             } else { 
                 if (Math.abs(targetPileIdx - selected.pile) !== 1) { setLocalMsg("❌ Stacker : Shift Pile ADJACENTE."); return; } 
                 const firstNonFull = getFirstNonFullCol(G.cour[targetPileIdx]); 
                 if (firstNonFull === -1) { setLocalMsg("❌ Pile adjacente pleine."); return; } 
                 targetColIdx = firstNonFull; 
+                if (!processTutorialAction('shift_nav', [targetPileIdx])) return;
             }
             
             mutateG(draft => { 
@@ -699,6 +864,7 @@
             if (!canInteract) return;
             if (selected && selected.type === 'machine') { handleMachineMove(pileIdx); return; }
             if (selected && selected.type === 'block' && selected.machine === 'S') {
+                if (!processTutorialAction('shift_nav', [pileIdx])) return;
                 handleShiftDestination(pileIdx, null);
             }
           };
@@ -710,6 +876,8 @@
             const requiredBlockId = getCurrentRequirement(crane); const blockToPlaceId = G.cour[selected.pile][selected.col][G.cour[selected.pile][selected.col].length - 1];
             if (requiredBlockId !== blockToPlaceId) { setLocalMsg(`❌ Erreur : Requis [${BLOCK_TYPES[requiredBlockId].name}].`); return; }
             
+            if (!processTutorialAction('click_crane', [craneIndex])) return;
+
             mutateG(draft => {
                 draft.cour[selected.pile][selected.col].pop(); 
                 let pointsEarned = BLOCK_TYPES[blockToPlaceId].points;
@@ -729,7 +897,8 @@
                 if (draft.gameMode === 'solo') {
                     draft.pgUsed += 1;
                 } else {
-                    draft.players[draft.currentPlayer].score += pointsEarned; 
+                    const targetStacker = tutorialState ? 0 : draft.currentPlayer;
+                    draft.players[targetStacker].score += pointsEarned; 
                     draft.ap -= 1;
                 }
                 
@@ -752,9 +921,11 @@
           };
 
           const handleVoluntarySpelo = (stackerId) => { 
-              if (!canInteract || (G.gameMode !== 'solo' && G.ap < 2)) { setLocalMsg("⚠️ Impossible: < 2 PG."); return; }
-              const target = G.gameMode === 'solo' ? stackerId : G.currentPlayer;
+              if (!canInteract || (G.gameMode !== 'solo' && G.ap < 2 && !tutorialState)) { setLocalMsg("⚠️ Impossible: < 2 PG."); return; }
+              const target = G.gameMode === 'solo' ? stackerId : (tutorialState ? 0 : G.currentPlayer);
               if (G.stackers[target] === null) return;
+
+              if (!processTutorialAction('voluntary_spelo', [])) return;
 
               mutateG(draft => { 
                   draft.stackers[target] = null; 
@@ -766,16 +937,18 @@
           
           const endTurn = () => { 
               if (!canInteract || G.gameMode === 'solo') return; 
+              if (!processTutorialAction('pass_turn', [])) return;
+
               mutateG(draft => { 
-                  draft.currentPlayer = draft.currentPlayer === 0 ? 1 : 0; 
+                  if (!tutorialState) draft.currentPlayer = draft.currentPlayer === 0 ? 1 : 0; 
                   draft.ap = 4; 
-                  draft.message = `À Joueur ${draft.currentPlayer + 1}`; 
+                  draft.message = tutorialState ? `À vous de jouer.` : `À Joueur ${draft.currentPlayer + 1}`; 
               }); 
               setSelected(null); setLocalMsg("");
           };
           
           const handleUndo = () => { 
-              if (!G.history || G.history.length === 0 || !canInteract) return; 
+              if (!G.history || G.history.length === 0 || !canInteract || tutorialState) return; 
               const newG = JSON.parse(JSON.stringify(G)); const previousState = newG.history.pop(); const restoredG = { ...previousState, history: newG.history }; 
               restoredG.message = "⏪ Undo"; setG(restoredG); 
               if (roomId && db && user && restoredG.gameMode !== 'solo') { setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'rooms', roomId), { payload: JSON.stringify(restoredG) }); } 
@@ -789,6 +962,8 @@
             if (type === 'S') return <div className={`${baseClass} ${player===0 ? 'bg-blue-600' : 'bg-red-600'} border-white rounded-full text-white text-[clamp(12px,2vh,16px)] leading-none`} title={`Stacker J${player+1}`}>S{player+1}</div>;
           };
 
+          const currentStepData = tutorialState?.active ? TUTORIAL_STEPS[tutorialState.step] : null;
+
           return (
             <div className="h-[100dvh] w-screen overflow-hidden bg-slate-950 flex flex-col items-center relative">
               
@@ -799,7 +974,7 @@
                   <div className="flex flex-col items-center justify-center h-full w-full p-4 relative z-10">
                       <div className="max-w-md w-full bg-slate-900 border-2 border-slate-700 p-6 rounded-xl shadow-2xl text-center">
                           <h1 className="text-3xl font-bold text-blue-400 mb-2 uppercase tracking-widest font-sans">Container Rush</h1>
-                          <p className="text-slate-400 mb-6 text-sm">Édition V2.8</p>
+                          <p className="text-slate-400 mb-6 text-sm">Édition V2.10</p>
                           {localMsg && <div className="bg-red-900/50 border border-red-500 text-red-200 p-2 rounded mb-4 text-sm">{localMsg}</div>}
 
                           {lobbyMode === 'menu' && (
@@ -814,13 +989,18 @@
                                   <button onClick={() => setLobbyMode('ai')} className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded shadow-lg text-sm">
                                       🤖 JOUER CONTRE L'IA
                                   </button>
-                                  <div className="pt-4 border-t border-slate-800 flex gap-2">
-                                      <button onClick={() => startLocalGame(false)} className="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-2 rounded border border-slate-600 text-xs shadow-md">
-                                          💻 SALLE TEST
+                                  <div className="pt-4 border-t border-slate-800">
+                                      <button onClick={startInteractiveTutorial} className="w-full mb-3 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-bold py-3 px-4 rounded border border-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.3)] text-sm transition">
+                                          🎓 TUTORIEL GUIDÉ
                                       </button>
-                                      <button onClick={() => setShowDevlog(true)} className="w-1/2 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2 px-2 rounded border border-amber-600 shadow-[0_0_10px_rgba(251,191,36,0.2)] text-xs transition">
-                                          📝 DEVLOG
-                                      </button>
+                                      <div className="flex gap-2">
+                                          <button onClick={() => startLocalGame(false)} className="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-2 rounded border border-slate-600 text-xs shadow-md">
+                                              💻 SALLE TEST
+                                          </button>
+                                          <button onClick={() => setShowDevlog(true)} className="w-1/2 bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold py-2 px-2 rounded border border-amber-600 shadow-[0_0_10px_rgba(251,191,36,0.2)] text-xs transition">
+                                              📝 DEVLOG
+                                          </button>
+                                      </div>
                                   </div>
                               </div>
                           )}
@@ -919,7 +1099,7 @@
                         {G.gameMode === 'solo' ? (
                             <div className="w-full text-[clamp(10px,1.5vh,16px)] font-black px-1 py-1 rounded text-center leading-none bg-orange-900/50 text-orange-400 border border-orange-700">NIVEAU {G.levelId}</div>
                         ) : (
-                            <div className={`w-full text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 0 ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500'}`}>J1: {G.players[0].score} PF</div>
+                            <div className={`w-full text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 0 || tutorialState ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500'}`}>J1: {G.players[0].score} PF</div>
                         )}
                     </div>
                     
@@ -931,7 +1111,7 @@
                          <button onClick={() => G.gameMode === 'solo' ? setShowSoloRules(true) : setShowRules(true)} className="text-[10px] bg-slate-700 text-blue-300 font-bold px-2 py-0.5 rounded">📖</button>
                       </div>
                       
-                      {roomId && G.gameMode !== 'solo' && (
+                      {roomId && G.gameMode !== 'solo' && !tutorialState && (
                           <div className="flex items-center justify-center gap-2 mt-1 mb-1 w-full">
                               <span className="text-sm md:text-base text-orange-500 font-black bg-orange-950/50 px-3 py-1 rounded-l border border-orange-600 shadow-sm tracking-widest">CODE : {roomId}</span>
                               <button onClick={copyRoomCode} className="text-[10px] md:text-xs bg-orange-600 hover:bg-orange-500 text-white px-3 py-1.5 rounded-r font-bold shadow-sm transition h-full border border-orange-600">COPIER</button>
@@ -944,9 +1124,9 @@
                         ) : (
                             <span className="text-[10px] text-yellow-400 font-bold bg-black px-2 py-0.5 rounded border border-yellow-600">PG: {G.ap}/4</span>
                         )}
-                        <button onClick={handleUndo} disabled={!G.history?.length || !canInteract} className="px-1.5 py-0.5 rounded border text-[10px] bg-slate-700 text-white">↩️</button>
+                        <button onClick={handleUndo} disabled={!G.history?.length || !canInteract || tutorialState} className="px-1.5 py-0.5 rounded border text-[10px] bg-slate-700 text-white">↩️</button>
                         {G.gameMode !== 'solo' && (
-                            <button onClick={endTurn} disabled={!canInteract} className="px-2 py-0.5 rounded font-bold text-[10px] bg-red-700 text-white">PASSER</button>
+                            <button onClick={endTurn} disabled={!canInteract && !tutorialState} className={`px-2 py-0.5 rounded font-bold text-[10px] bg-red-700 text-white ${getTutoClass('PASS_BTN')}`}>PASSER</button>
                         )}
                       </div>
                     </div>
@@ -956,7 +1136,7 @@
                         {G.gameMode === 'solo' ? (
                              <div className="w-full text-[clamp(9px,1.2vh,12px)] font-bold px-1 py-1 rounded text-center leading-none bg-slate-800 text-slate-400 border border-slate-700">3 DECKS POUR GAGNER</div>
                         ) : (
-                             <div className={`w-full text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 1 ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-500'}`}>J2: {G.players[1].score} PF</div>
+                             <div className={`w-full text-[clamp(10px,1.5vh,16px)] font-bold px-1 py-0.5 rounded text-center leading-none ${G.currentPlayer === 1 && !tutorialState ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-500'}`}>{tutorialState ? 'TUTO' : `J2: ${G.players[1].score} PF`}</div>
                         )}
                     </div>
                   </div>
@@ -972,7 +1152,7 @@
                       const reqBlock = getCurrentRequirement(crane);
                       
                       return (
-                        <div key={crane.id} onClick={() => handleCraneClick(idx)} className={`p-1.5 md:p-2 rounded-xl border-2 flex-1 min-w-0 flex flex-col gap-1.5 md:gap-2 ${isDone ? 'bg-slate-950 border-emerald-900 opacity-70' : 'bg-slate-800 border-slate-600 hover:border-slate-400 cursor-pointer shadow-xl'} transition-colors`}>
+                        <div key={crane.id} onClick={() => handleCraneClick(idx)} className={`p-1.5 md:p-2 rounded-xl border-2 flex-1 min-w-0 flex flex-col gap-1.5 md:gap-2 ${isDone ? 'bg-slate-950 border-emerald-900 opacity-70' : 'bg-slate-800 border-slate-600 hover:border-slate-400 cursor-pointer shadow-xl'} transition-colors ${getTutoClass('CRANE_'+idx)}`}>
                           
                           <div className="flex justify-between items-center z-10 border-b border-white/10 pb-1 flex-none pointer-events-none shrink-0">
                               <span className="font-black text-[11px] md:text-[14px] text-white truncate tracking-wider">{crane.name}</span>
@@ -998,7 +1178,7 @@
                   {/* 3. FLOTTE (Machines Globales) */}
                   <div className="flex-none bg-slate-900 border border-slate-700 rounded-lg p-1.5 flex items-center justify-between shadow-md">
                       <div className="flex gap-2 w-full justify-around h-[5vh] max-h-[40px] min-h-[30px]">
-                          <div onClick={() => handleMachineSelect('S', 0)} className="flex items-center gap-1 w-1/4 max-w-[100px] rounded">
+                          <div onClick={() => handleMachineSelect('S', 0)} className={`flex items-center gap-1 w-1/4 max-w-[100px] rounded ${getTutoClass('FLEET_S0')}`}>
                               <div className="h-full aspect-square shrink-0 pointer-events-none">{renderMachineToken('S', 0, selected?.type==='machine' && selected.id===0)}</div>
                               <span className="text-[clamp(9px,1.4vh,12px)] text-slate-500 hidden sm:block truncate pointer-events-none">{G.stackers[0]===null ? 'Spelo' : `P${G.stackers[0]+1}`}</span>
                           </div>
@@ -1006,7 +1186,7 @@
                               <div className="h-full aspect-square shrink-0 pointer-events-none">{renderMachineToken('S', 1, selected?.type==='machine' && selected.id===1)}</div>
                               <span className="text-[clamp(9px,1.4vh,12px)] text-slate-500 hidden sm:block truncate pointer-events-none">{G.stackers[1]===null ? 'Spelo' : `P${G.stackers[1]+1}`}</span>
                           </div>
-                          <div onClick={() => handleMachineSelect('T', 'T')} className="flex items-center gap-1 w-1/4 max-w-[100px] rounded">
+                          <div onClick={() => handleMachineSelect('T', 'T')} className={`flex items-center gap-1 w-1/4 max-w-[100px] rounded ${getTutoClass('FLEET_T')}`}>
                               <div className="h-full aspect-square shrink-0 pointer-events-none">{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>
                           </div>
                           <div className="border-l border-slate-700 pl-2 flex items-center justify-center flex-1">
@@ -1037,6 +1217,7 @@
                                           ${isActiveView ? 'border-white bg-slate-800 scale-105 z-10 shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'border-slate-800'}
                                           ${isTAura && !isActiveView ? 'border-t-red-900 bg-red-950/20' : ''}
                                           ${isValidShiftTarget ? 'border-yellow-400 bg-yellow-900/30 animate-pulse' : ''}
+                                          ${getTutoClass('NAV_'+pIdx)}
                                        `}
                                   >
                                       <div className="absolute top-1 w-full flex justify-center pointer-events-none">
@@ -1075,7 +1256,7 @@
                           
                           {/* Parking Detail */}
                           <div className={`w-[15vw] max-w-[70px] h-[65%] flex flex-col justify-end items-center pb-2 rounded border-b-4 bg-slate-800 cursor-pointer ${Math.abs(G.transtainer - activePileIdx) <= 1 ? 'border-red-700 bg-red-950/30' : 'border-slate-500'}`} onClick={() => handleParkingClick(activePileIdx)}>
-                              {G.transtainer === activePileIdx && <div className={`h-[45%] w-auto max-h-[50px] aspect-square mb-1.5 rounded shrink-0`} onClick={(e) => { e.stopPropagation(); handleMachineSelect('T', 'T'); }}>{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>}
+                              {G.transtainer === activePileIdx && <div className={`h-[45%] w-auto max-h-[50px] aspect-square mb-1.5 rounded shrink-0 ${getTutoClass('PARKING_T', activePileIdx)}`} onClick={(e) => { e.stopPropagation(); handleMachineSelect('T', 'T'); }}>{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>}
                               {G.stackers[0] === activePileIdx && <div className="h-[45%] w-auto max-h-[50px] aspect-square mb-1.5 shrink-0" onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 0); }}>{renderMachineToken('S', 0, selected?.type==='machine' && selected.id===0)}</div>}
                               {G.stackers[1] === activePileIdx && <div className="h-[45%] w-auto max-h-[50px] aspect-square mb-1.5 shrink-0" onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 1); }}>{renderMachineToken('S', 1, selected?.type==='machine' && selected.id===1)}</div>}
                               {G.stackers[0] !== activePileIdx && G.stackers[1] !== activePileIdx && G.transtainer !== activePileIdx && <span className="text-[clamp(8px,1.5vh,12px)] text-slate-500 pointer-events-none">PARK</span>}
@@ -1085,13 +1266,13 @@
                           <div className="flex gap-1.5 sm:gap-2 h-full items-end">
                               {G.cour[activePileIdx].map((col, cIdx) => {
                                   const isT_Here = G.transtainer === activePileIdx;
-                                  const hasS0 = (G.stackers[0] === activePileIdx) && (G.gameMode === 'solo' || G.currentPlayer === 0);
-                                  const hasS1 = (G.stackers[1] === activePileIdx) && (G.gameMode === 'solo' || G.currentPlayer === 1);
+                                  const hasS0 = (G.stackers[0] === activePileIdx) && (G.gameMode === 'solo' || G.currentPlayer === 0 || tutorialState);
+                                  const hasS1 = (G.stackers[1] === activePileIdx) && (G.gameMode === 'solo' || G.currentPlayer === 1 || tutorialState);
                                   const isS_Here = hasS0 || hasS1;
                                   const firstAvailCol = getFirstAvailCol(G.cour[activePileIdx]);
 
                                   return (
-                                      <div key={cIdx} onClick={() => handleColClickDetail(cIdx)} className={`w-[12vw] max-w-[65px] h-[90%] bg-slate-950/80 rounded flex flex-col-reverse justify-start items-center p-1 border-x border-t border-slate-700 transition ${selected?.type === 'block' && selected.pile === activePileIdx && selected.col === cIdx ? 'bg-yellow-400/20 border-yellow-400' : col.length >= 3 ? 'border-b-4 border-b-slate-950' : 'border-b border-b-slate-700'}`}>
+                                      <div key={cIdx} onClick={() => handleColClickDetail(cIdx)} className={`w-[12vw] max-w-[65px] h-[90%] bg-slate-950/80 rounded flex flex-col-reverse justify-start items-center p-1 border-x border-t border-slate-700 transition ${selected?.type === 'block' && selected.pile === activePileIdx && selected.col === cIdx ? 'bg-yellow-400/20 border-yellow-400' : col.length >= 3 ? 'border-b-4 border-b-slate-950' : 'border-b border-b-slate-700'} ${getTutoClass('DETAIL_COL_' + cIdx, activePileIdx)}`}>
                                           {col.map((blockId, bIdx) => {
                                               const isTopBlock = bIdx === col.length - 1;
                                               let isAccessible = false;
@@ -1108,7 +1289,7 @@
                                           })}
                                           {/* Helper Visuel Shift Transtainer */}
                                           {selected?.type === 'block' && selected.machine === 'T' && selected.pile === activePileIdx && col.length < 3 && (
-                                              <div className={`h-[31%] w-auto max-h-[60px] aspect-square shrink-0 border border-dashed border-yellow-400/50 rounded mt-1 flex items-center justify-center bg-yellow-400/10`}>
+                                              <div className={`h-[31%] w-auto max-h-[60px] aspect-square shrink-0 border border-dashed border-yellow-400/50 rounded mt-1 flex items-center justify-center bg-yellow-400/10 ${getTutoClass('DETAIL_SHIFT_' + cIdx, activePileIdx)}`}>
                                                   <span className="text-[clamp(10px,2vh,16px)] text-yellow-200 pointer-events-none">⬇️</span>
                                               </div>
                                           )}
@@ -1119,6 +1300,45 @@
                           <div className="text-[clamp(8px,1.5vh,12px)] text-slate-500 uppercase tracking-widest mb-4 flex-none">Fond</div>
                       </div>
                   </div>
+
+                  {/* BULLE DU TUTORIEL (EN HAUT) */}
+                  {tutorialState && tutorialState.active && currentStepData && (
+                    tutorialState.minimized ? (
+                      <button onClick={() => setTutorialState(prev => ({...prev, minimized: false}))} className="absolute top-24 right-4 bg-emerald-600 border-2 border-white text-white px-4 py-2 rounded-full font-bold shadow-lg z-[100] animate-pulse">
+                          [+] Afficher Tuto ({tutorialState.step})
+                      </button>
+                    ) : currentStepData.type === 'ai_turn' || currentStepData.type === 'info' ? (
+                        <div className="absolute inset-0 bg-black/90 z-[100] flex items-center justify-center p-4">
+                            <div className="bg-slate-900 border-4 border-emerald-400 p-8 rounded-2xl shadow-[0_0_50px_rgba(16,185,129,0.5)] max-w-xl w-full text-center flex flex-col items-center">
+                                <div className="text-5xl mb-4">🎓</div>
+                                <h3 className="text-emerald-400 font-black text-2xl mb-4 tracking-widest uppercase">{currentStepData.title}</h3>
+                                <p className="text-white text-lg mb-8 leading-relaxed">{currentStepData.text}</p>
+                                <button 
+                                    onClick={() => {
+                                        if (currentStepData.type === 'ai_turn' && currentStepData.execute) { mutateG(currentStepData.execute); }
+                                        if (currentStepData.action === 'end') { returnToMenu(); } 
+                                        else { setTutorialState(prev => ({...prev, step: prev.step + 1})); }
+                                    }}
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-8 rounded-lg text-xl shadow-lg transition transform hover:scale-105"
+                                >
+                                    {currentStepData.action === 'end' ? 'Terminer' : 'Continuer ▶'}
+                                </button>
+                            </div>
+                        </div>
+                    ) : (
+                      <div className="absolute top-[18vh] left-1/2 transform -translate-x-1/2 bg-slate-900 border-2 border-emerald-400 p-4 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.8)] z-[100] w-11/12 max-w-lg text-center flex flex-col items-center">
+                          <div className="flex justify-between items-center w-full mb-2 border-b border-slate-700 pb-1">
+                              <h3 className="text-emerald-300 font-black text-xs tracking-widest uppercase">Étape {tutorialState.step} / {TUTORIAL_STEPS.length - 1}</h3>
+                              <button onClick={() => setTutorialState(prev => ({...prev, minimized: true}))} className="text-slate-400 hover:text-white font-bold px-2 py-1 bg-slate-800 rounded text-xs border border-slate-600">[-] Réduire</button>
+                          </div>
+                          <p className="text-white text-sm md:text-base font-bold leading-snug mb-3">{currentStepData.text}</p>
+                          <button onClick={resetTutorialSelection} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-4 py-1.5 rounded text-xs font-bold transition shadow-md flex items-center justify-center gap-2 mx-auto">
+                              <span>↻</span> Recommencer l'étape
+                          </button>
+                      </div>
+                    )
+                  )}
+
                 </div>
               )}
 
@@ -1190,6 +1410,12 @@
                       <button onClick={() => setShowDevlog(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-sm">FERMER</button>
                       <h2 className="text-2xl font-bold text-emerald-400 mb-6 border-b border-slate-700 pb-2 font-sans tracking-widest uppercase">📝 Journal de Bord</h2>
                       <div className="space-y-6">
+                          <div>
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-emerald-600 text-white px-2 py-0.5 rounded text-xs">V2.10</span> Résolution et Sécurité</h3>
+                              <ul className="list-disc pl-5 mt-2 text-sm space-y-1 text-slate-400">
+                                  <li>Restauration complète du moteur de Tutoriel Interactif.</li>
+                              </ul>
+                          </div>
                           <div>
                               <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-emerald-600 text-white px-2 py-0.5 rounded text-xs">V2.8</span> Le Test à Bretelles</h3>
                               <ul className="list-disc pl-5 mt-2 text-sm space-y-1 text-slate-400">
