@@ -19,6 +19,16 @@
         @keyframes bounce-slight { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, -10px); } }
         .animate-bounce-slight { animation: bounce-slight 2s infinite ease-in-out; }
         
+        /* FOND BLUEPRINT POUR LE MENU */
+        .bg-blueprint {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.8) 100%),
+                linear-gradient(rgba(59, 130, 246, 0.15) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.15) 1px, transparent 1px);
+            background-size: 100% 100%, 30px 30px, 30px 30px;
+        }
+
         /* ANIMATIONS SUR-MESURE POUR LES HALOS LUMINEUX */
         .base-shadow { box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.3); }
         .selected-shadow { box-shadow: inset 0 2px 4px rgba(255,255,255,0.2), inset 0 -2px 4px rgba(0,0,0,0.3), 0 0 15px rgba(250,204,21,0.8); }
@@ -49,9 +59,12 @@
         // --- DICTIONNAIRE BILINGUE ---
         const i18n = {
             fr: { 
-                edition: "Édition V2.31", 
+                edition: "Édition V2.94", 
+                btn_multi: "MULTIJOUEURS",
+                badge_recommended: "RECOMMANDÉ",
+                badge_experimental: "EXPÉRIMENTAL",
                 btn_online: "🌐 JOUER EN LIGNE", 
-                btn_solo: "📦 LE TEST À BRETELLES", 
+                btn_solo: "👷 LE TEST À BRETELLES", 
                 btn_ai: "🤖 JOUER CONTRE L'IA", 
                 btn_tuto: "🎓 TUTORIEL MULTI", 
                 btn_tuto_solo: "🎓 TUTORIEL SOLO",
@@ -79,8 +92,8 @@
                 code: "CODE :", 
                 copy: "COPIER", 
                 copied: "Copié !", 
-                pg_used: "PG UTILISÉS :", 
-                pg: "PG:", 
+                pg_used: "MOVES UTILISÉS :", 
+                pg: "MOVES:", 
                 pass: "PASSER", 
                 win_decks_solo: "3 DECKS POUR GAGNER", 
                 spello: "SPELLO", 
@@ -95,7 +108,8 @@
                 cancel: "Annuler", 
                 confirm: "Confirmer", 
                 quit: "Quitter", 
-                restart_step: "Recommencer l'étape", 
+                prev_step: "Étape précédente", 
+                step_rewind: "⏪ Étape précédente.", 
                 show_tuto: "Afficher Tuto", 
                 hide: "Réduire", 
                 finish: "Terminer", 
@@ -113,9 +127,9 @@
                 msg_select_s: "🔵 STACKER : Cliquez sur une Pile du Navigateur pour le déplacer.", 
                 msg_select_block_t: "🟡 Conteneur (T). Cliquez sur Plan ou case vide en bas pour Shifter.", 
                 msg_select_block_s: "🔵 Conteneur (S). Cliquez sur Plan ou pile voisine en haut pour Shifter.", 
-                msg_err_pg: "⚠️ PG Insuffisants.", 
+                msg_err_pg: "⚠️ Moves Insuffisants.", 
                 msg_err_stacker: "❌ Sélectionnez VOTRE Stacker.", 
-                msg_err_spello: "⚠️ Impossible: < 2 PG.", 
+                msg_err_spello: "⚠️ Impossible: < 2 Moves.", 
                 msg_err_machine: "❌ Amenez une machine ici pour interagir.", 
                 msg_err_req: "❌ Erreur : Requis", 
                 msg_shift_ok: "✅ Shiftage réussi", 
@@ -123,15 +137,31 @@
                 msg_deck_ok: "🚢 Deck terminé !", 
                 msg_placed: "📦 Posé", 
                 block_L: "Léger", block_M: "Moyen", block_H: "Lourd", block_R: "Reefer", block_HAZ: "Hazard", block_TW: "Twin", 
-                t_title1: "Le But du Jeu", t_txt1: "Bienvenue sur le terminal ! Le but du jeu est d'accumuler le maximum de Points de Fret (PF) en chargeant le navire selon des plans stricts.", t_title2: "Les Points de Fret", t_txt2: "Chaque conteneur rapporte des points différents : Lourd=1 PF, Moyen=2 PF, jusqu'au Twin=5 PF ! La Grue 1 demande 2 Lourds (Noirs) pour commencer. Suivez le halo vert !", t_txt3: "TOUR 1. Vous disposez de 4 Points Grue (PG) par tour. Ces PG représentent votre énergie d'action ! Sélectionnez votre Stacker (S1) bleu dans la flotte en haut.", t_txt4: "Les machines sont essentielles : sans elles au parking d'une pile, impossible d'interagir ! Garez le Stacker sur la Pile 2 dans le Navigateur central (-1 PG).", t_txt5: "Le Stacker (S) ne prend QUE le conteneur à l'avant. Cliquez sur le conteneur Lourd (Noir) dans la vue détaillée.", t_txt6: "Pour envoyer ce conteneur au navire, cliquez sur la Grue 1. Cela valide le chargement et démarre la fondation (-1 PG) !", t_txt7: "Il vous reste 2 PG. Sélectionnez le grand Transtainer (T) jaune.", t_txt8: "Le Transtainer est puissant, mais chaque déplacement coûte de précieux PG qui auraient pu servir à envoyer des conteneurs ! Déplacez-le sur la Pile 4 (-1 PG).", t_txt9: "Contrairement au Stacker, le Transtainer peut plonger pour prendre n'importe quel conteneur au sommet. Prenez le conteneur Lourd (Noir) de la 3ème colonne.", t_txt10: "Envoyez-le sur la Grue 1 (-1 PG). La fondation A est prête !", t_txt11: "Vos 4 PG sont épuisés. Cliquez sur PASSER (bouton rouge).", t_title_ia: "Tour de l'IA", t_txt_ia: "L'IA déplace le Transtainer sur la Pile 2. Attention : Le Transtainer impose une Zone de Sécurité sur sa pile et les deux voisines. Votre Stacker s'y trouvait : il est expulsé en Zone Spello pour sa sécurité !", t_txt12: "TOUR 2 (4 PG). Votre Stacker est en Spello. Sélectionnez-le.", t_txt13: "SORTIR du Spello coûte 0 PG ! Garez-vous sur la Pile 5.", t_txt14: "Le niveau B demande un Lourd (Noir), bloqué par un Léger (Blanc) à l'avant. Prenez le Blanc.", t_txt15: "SHIFTAGE STACKER : Un Stacker shifte uniquement vers une pile voisine ! Cliquez sur la Pile 6 pour y jeter le Blanc (-1 PG). Vous pouvez aussi utiliser ce coup pour bloquer un joueur !", t_txt16: "Le conteneur Lourd (Noir) est dégagé ! Prenez-le.", t_txt17: "Envoyez-le sur la Grue 1 (-1 PG).", t_txt18: "Il vous reste 2 PG. Cliquez sur la Pile 2 dans le Navigateur pour y observer le Transtainer.", t_txt19: "Sélectionnez le Transtainer en cliquant sur son jeton directement garé dans le parking en bas !", t_txt20: "La Grue 1 veut ensuite un Moyen (Gris), bloqué par un Léger (Blanc). Prenez le Blanc.", t_txt21: "SHIFTAGE TRANSTAINER : Le T shifte dans sa PROPRE pile. Cliquez sur la flèche ⬇️ de la colonne vide à côté (-1 PG).", t_txt22: "Prenez le conteneur Moyen (Gris) maintenant accessible.", t_txt23: "Envoyez-le sur la Grue 1 (-1 PG). La structure monte !", t_txt24: "Tour terminé, cliquez sur PASSER.", t_title_end: "Tutoriel Terminé !", t_txt_end: "Vous maîtrisez la légalité des poses, la sélection via le parking, le shiftage, et la Zone de Sécurité. Le port vous appartient !",
-                t_solo_title1: "Le Test à Bretelles", t_solo_txt1: "Bienvenue dans le mode Solo ! Ici, pas d'adversaire ni de limite de tours. Vous contrôlez TOUTES les machines. Le but : sceller les 3 Decks en utilisant le MOINS de PG possible.",
-                t_solo_title2: "Contrôle Total", t_solo_txt2: "Essayons d'optimiser un mouvement. Sélectionnez le Stacker 1 (Bleu) dans la flotte.",
-                t_solo_txt3: "Déplacez-le sur la Pile 2 (+1 PG). Notez que le compteur de PG grimpe !",
-                t_solo_txt4: "Sélectionnez le conteneur Lourd (Noir) à l'avant de la pile détaillée.",
-                t_solo_txt5: "Envoyez ce conteneur sur la Grue 1 (+1 PG).",
-                t_solo_txt6: "Maintenant, sélectionnez le Stacker 2 (Rouge) dans la flotte.",
-                t_solo_txt7: "Déplacez-le sur la Pile 2 (+1 PG). Observez bien : vous allez écraser votre propre Stacker 1 !",
-                t_solo_title3: "Le Spello-Trick", t_solo_txt8: "Brillant ! Votre Stacker 1 est en Spello. Sa prochaine sortie coûtera 0 PG. Utilisez cette tactique d'auto-écrasement pour économiser des points à long terme. À vous de jouer !",
+                t_title1: "Le But du Jeu", t_txt1: "Bienvenue sur le terminal ! Le but du jeu est d'accumuler le maximum de Points de Fret (PF) en chargeant le navire selon des plans stricts.", t_title2: "Les Points de Fret", t_txt2: "Chaque conteneur rapporte des points différents : Lourd=1 PF, Moyen=2 PF, jusqu'au Twin=5 PF ! La Grue 1 demande 2 Lourds (Noirs) pour commencer. Suivez le halo vert !", t_txt3: "TOUR 1. Vous disposez de 4 Moves par tour. Ces Moves représentent votre énergie d'action ! Sélectionnez votre Stacker (S1) bleu dans la flotte en haut.", t_txt4: "Les machines sont essentielles : sans elles au parking d'une pile, impossible d'interagir ! Garez le Stacker sur la Pile 2 dans le Navigateur central (-1 Move).", t_txt5: "Le Stacker (S) ne prend QUE le conteneur à l'avant. Cliquez sur le conteneur Lourd (Noir) dans la vue détaillée.", t_txt6: "Pour envoyer ce conteneur au navire, cliquez sur la Grue 1. Cela valide le chargement et démarre la fondation (-1 Move) !", t_txt7: "Il vous reste 2 Moves. Sélectionnez le grand Transtainer (T) jaune.", t_txt8: "Le Transtainer est puissant, mais chaque déplacement coûte de précieux Moves ! Déplacez-le sur la Pile 4 (-1 Move).", t_txt9: "Contrairement au Stacker, le Transtainer peut plonger pour prendre n'importe quel conteneur au sommet. Prenez le conteneur Lourd (Noir) de la 3ème colonne.", t_txt10: "Envoyez-le sur la Grue 1 (-1 Move). La fondation A est prête !", t_txt11: "Vos 4 Moves sont épuisés. Cliquez sur PASSER (bouton rouge).", t_title_ia: "Tour de l'IA", t_txt_ia: "L'IA déplace le Transtainer sur la Pile 2. Attention : Le Transtainer impose une Zone de Sécurité sur sa pile et les deux voisines. Votre Stacker s'y trouvait : il est expulsé en Zone Spello pour sa sécurité !", t_txt12: "TOUR 2 (4 Moves). Votre Stacker est en Spello. Sélectionnez-le.", t_txt13: "SORTIR du Spello coûte 0 Move ! Garez-vous sur la Pile 5.", t_txt14: "Le niveau B demande un Lourd (Noir), bloqué par un Léger (Blanc) à l'avant. Prenez le Blanc.", t_txt15: "SHIFTAGE STACKER : Un Stacker shifte uniquement vers une pile voisine ! Cliquez sur la Pile 6 pour y jeter le Blanc (-1 Move). Vous pouvez aussi utiliser ce coup pour bloquer un joueur !", t_txt16: "Le conteneur Lourd (Noir) est dégagé ! Prenez-le.", t_txt17: "Envoyez-le sur la Grue 1 (-1 Move).", t_txt18: "Il vous reste 2 Moves. Cliquez sur la Pile 2 dans le Navigateur pour y observer le Transtainer.", t_txt19: "Sélectionnez le Transtainer en cliquant sur son jeton directement garé dans le parking en bas !", t_txt20: "La Grue 1 veut ensuite un Moyen (Gris), bloqué par un Léger (Blanc). Prenez le Blanc.", t_txt21: "SHIFTAGE TRANSTAINER : Le T shifte dans sa PROPRE pile. Cliquez sur la flèche ⬇️ de la colonne vide à côté (-1 Move).", t_txt22: "Prenez le conteneur Moyen (Gris) maintenant accessible.", t_txt23: "Envoyez-le sur la Grue 1 (-1 Move). La structure monte !", t_txt24: "Tour terminé, cliquez sur PASSER.", t_title_end: "Tutoriel Terminé !", t_txt_end: "Vous maîtrisez la légalité des poses, la sélection via le parking, le shiftage, et la Zone de Sécurité. Le port vous appartient !",
+                t_solo_title1: "Le Test à Bretelles", 
+                t_solo_txt1: "Bienvenue dans le mode Solo ! L'objectif est de sceller les 3 Decks en utilisant le MOINS de Moves possible. Chaque mouvement fait grimper votre compteur.",
+                t_solo_title2: "Coordination des Stackers", 
+                t_solo_txt2: "La clé est d'utiliser la bonne machine. Sélectionnez le Stacker 1 (S1 - Bleu) garé sur la Pile 1.",
+                t_solo_txt3: "Garez-le sur la Pile 2 (+1 Move). Avantage du Stacker : le déplacer vers N'IMPORTE QUELLE autre pile coûte toujours 1 Move, peu importe la distance !",
+                t_solo_txt4: "Prenez le Lourd (Noir) à l'avant de cette pile.",
+                t_solo_txt5: "Envoyez ce conteneur sur la Grue 1 (+1 Move).",
+                t_solo_txt6: "La grue demande un autre Lourd. Au lieu de traverser tout le port avec S1, utilisez votre seconde machine ! Sélectionnez le Stacker 2 (S2 - Rouge). Remarquez qu'il est en zone 'Spello'.",
+                t_solo_txt7: "Déplacez S2 sur la Pile 9 (+0 Move). Sortir de la zone Spello est toujours gratuit !",
+                t_solo_txt_shift1: "Le Lourd (Noir) à l'avant est bloqué par un Léger (Blanc). Prenez ce Léger.",
+                t_solo_txt_shift2: "SHIFTAGE STACKER : Le Stacker shifte UNIQUEMENT vers une pile voisine avec de l'espace. Cliquez sur la Pile 10 pour y jeter le Blanc (+1 Move).",
+                t_solo_txt8: "Le Lourd (Noir) est maintenant dégagé ! Prenez-le.",
+                t_solo_txt9: "Envoyez-le sur la Grue 1 (+1 Move).",
+                t_solo_txt10: "Il nous faut un dernier Lourd. Le seul disponible est profondément enfoui dans la Pile 2 ! S1 ne peut pas l'atteindre. Sélectionnez le Transtainer (Yellow).",
+                t_solo_txt11: "Déplacez-le sur la Pile 2 (+3 Moves). Le Transtainer est lourd : il coûte 1 Move par pile traversée ! De plus, il possède une Zone de Sécurité : les Stackers ne peuvent pas entrer dans sa pile ni ses voisines. Attention, il va écraser votre Stacker Bleu !",
+                t_solo_title3: "Le Spello-Trick", 
+                t_solo_txt12: "C'est le Spello-Trick ! S1 a été expulsé en Zone Spello. Puisque vous deviez bouger le Transtainer, vous avez 'ramassé' votre Stacker gratuitement. Sa prochaine sortie coûtera 0 Move !",
+                t_solo_txt13: "Le Transtainer peut plonger. Prenez le Léger (Blanc) au sommet qui bloque notre Lourd.",
+                t_solo_txt14: "SHIFTAGE : Le Transtainer a besoin d'une colonne incomplète dans sa PROPRE pile pour shifter. Cliquez sur la flèche ⬇️ de la colonne 4 à côté (+1 Move).",
+                t_solo_txt15: "Il reste encore un Moyen (Gris) par-dessus le conteneur Noir ! Prenez-le.",
+                t_solo_txt16: "Shiftez ce conteneur Moyen dans la colonne 2 (+1 Move).",
+                t_solo_txt17: "Enfin ! Prenez le Lourd (Noir) désormais dégagé au fond de la colonne 3.",
+                t_solo_txt18: "Envoyez-le sur la Grue 1 (+1 Move).",
+                t_solo_txt19: "Vous maîtrisez la coordination des machines et le Spello-Trick ! Le port est à vous !",
                 tab_easy_desc: "Le pool de conteneurs est simplifié (Uniquement Léger, Moyen, Lourd). C'est l'entraînement parfait pour maîtriser la zone Spello et les Shiftages.",
                 tab_med_desc: "Le pool standard (120 blocs) incluant les Reefers, Hazards et Twins. Les cartes utilisent les grilles standards de Baie et Deck. L'expérience originelle.",
                 tab_hard_desc: "Les grilles géantes. Les conteneurs spéciaux (Twin, Haz, Reefer) sont requis au compte-goutte. Il faudra retourner le port entier pour les trouver. Préparez-vous.",
@@ -139,9 +169,12 @@
                 legal_text2: "Un jeu de puzzle et d'optimisation logistique."
             },
             en: { 
-                edition: "V2.31 Edition", 
+                edition: "V2.94 Edition", 
+                btn_multi: "MULTIPLAYER",
+                badge_recommended: "RECOMMENDED",
+                badge_experimental: "EXPERIMENTAL",
                 btn_online: "🌐 PLAY ONLINE", 
-                btn_solo: "📦 THE SUSPENDER TEST", 
+                btn_solo: "👷 THE SUSPENDER TEST", 
                 btn_ai: "🤖 PLAY VS AI", 
                 btn_tuto: "🎓 MULTI TUTORIAL", 
                 btn_tuto_solo: "🎓 SOLO TUTORIAL",
@@ -169,8 +202,8 @@
                 code: "CODE:", 
                 copy: "COPY", 
                 copied: "Copied!", 
-                pg_used: "AP USED:", 
-                pg: "AP:", 
+                pg_used: "MOVES USED:", 
+                pg: "MOVES:", 
                 pass: "PASS", 
                 win_decks_solo: "3 DECKS TO WIN", 
                 spello: "SPELLO", 
@@ -185,7 +218,8 @@
                 cancel: "Cancel", 
                 confirm: "Confirm", 
                 quit: "Quit", 
-                restart_step: "Restart Step", 
+                prev_step: "Previous Step", 
+                step_rewind: "⏪ Reverted to previous step.", 
                 show_tuto: "Show Tuto", 
                 hide: "Hide", 
                 finish: "Finish", 
@@ -203,9 +237,9 @@
                 msg_select_s: "🔵 STACKER: Click on a Navigator Pile to move it.", 
                 msg_select_block_t: "🟡 Container (T). Click on Blueprint or empty spot below to Shift.", 
                 msg_select_block_s: "🔵 Container (S). Click on Blueprint or adjacent pile above to Shift.", 
-                msg_err_pg: "⚠️ Not enough AP.", 
+                msg_err_pg: "⚠️ Not enough Moves.", 
                 msg_err_stacker: "❌ Select YOUR Stacker.", 
-                msg_err_spello: "⚠️ Impossible: < 2 AP.", 
+                msg_err_spello: "⚠️ Impossible: < 2 Moves.", 
                 msg_err_machine: "❌ Bring a machine here to interact.", 
                 msg_err_req: "❌ Error: Required", 
                 msg_shift_ok: "✅ Shift successful", 
@@ -213,15 +247,31 @@
                 msg_deck_ok: "🚢 Deck completed!", 
                 msg_placed: "📦 Placed", 
                 block_L: "Light", block_M: "Medium", block_H: "Heavy", block_R: "Reefer", block_HAZ: "Hazard", block_TW: "Twin", 
-                t_title1: "The Goal", t_txt1: "Welcome to the terminal! The goal is to accumulate Freight Points (PF) by loading the ship according to strict plans.", t_title2: "Freight Points", t_txt2: "Each container yields different points: Heavy=1 PF, Medium=2 PF, up to Twin=5 PF! Crane 1 requires 2 Heavies (Black) to start. Follow the green halo!", t_txt3: "TURN 1. You have 4 Crane Points (AP) per turn. These APs are your action energy! Select your blue Stacker (S1) in the fleet above.", t_txt4: "Machines are essential: without them parked at a pile, you can't interact! Park the Stacker on Pile 2 in the central Navigator (-1 AP).", t_txt5: "The Stacker (S) ONLY takes the container at the front. Click on the Heavy (Black) container in the detailed view.", t_txt6: "To send this container to the ship, click on Crane 1. This validates the load and starts the foundation (-1 AP)!", t_txt7: "You have 2 AP left. Select the large yellow Transtainer (T).", t_txt8: "The Transtainer is powerful, but moving it costs precious APs! Move it to Pile 4 (-1 AP).", t_txt9: "Unlike the Stacker, the Transtainer can dive to grab any container at the top. Grab the Heavy (Black) container from the 3rd column.", t_txt10: "Send it to Crane 1 (-1 AP). Foundation A is ready!", t_txt11: "Your 4 APs are exhausted. Click on PASS (red button).", t_title_ia: "AI Turn", t_txt_ia: "AI Turn: The AI moves the Transtainer to Pile 2. Warning: The Transtainer imposes a Safety Zone on its pile and the two adjacent ones. Your Stacker was there: it's expelled to the Spello Zone for safety!", t_txt12: "TURN 2 (4 AP). Your Stacker is in Spello. Select it.", t_txt13: "EXITING Spello costs 0 AP! Park on Pile 5.", t_txt14: "Level B requires a Heavy (Black), blocked by a Light (White) at the front. Take the White.", t_txt15: "STACKER SHIFT: A Stacker only shifts to an adjacent pile! Click on Pile 6 to drop the White (-1 AP). You can also use this to block an opponent!", t_txt16: "The Heavy (Black) container is now free! Take it.", t_txt17: "Send it to Crane 1 (-1 AP).", t_txt18: "You have 2 AP left. Click on Pile 2 in the Navigator to view the Transtainer.", t_txt19: "Select the Transtainer by clicking its token parked at the bottom!", t_txt20: "Crane 1 then wants a Medium (Gray), blocked by a Light (White). Take the White.", t_txt21: "TRANSTAINER SHIFT: The T shifts within its OWN pile. Click the ⬇️ arrow on the empty column next to it (-1 AP).", t_txt22: "Take the newly accessible Medium (Gray) container.", t_txt23: "Send it to Crane 1 (-1 AP). The structure rises!", t_txt24: "Turn over, click on PASS.", t_title_end: "Tutorial Finished!", t_txt_end: "You have mastered placement legality, parking selection, shifting, and the Safety Zone. The port is yours!",
-                t_solo_title1: "The Suspender Test", t_solo_txt1: "Welcome to Solo mode! No opponents, no turn limits. You control ALL machines. The goal: seal all 3 Decks using the LEAST amount of AP possible.",
-                t_solo_title2: "Total Control", t_solo_txt2: "Let's optimize a move. Select Stacker 1 (Blue) in the fleet.",
-                t_solo_txt3: "Move it to Pile 2 (+1 AP). Notice the AP counter goes up!",
-                t_solo_txt4: "Select the Heavy (Black) container at the front of the detailed pile.",
-                t_solo_txt5: "Send this container to Crane 1 (+1 AP).",
-                t_solo_txt6: "Now, select Stacker 2 (Red) in the fleet.",
-                t_solo_txt7: "Move it to Pile 2 (+1 AP). Watch closely: you are about to crush your own Stacker 1!",
-                t_solo_title3: "The Spello-Trick", t_solo_txt8: "Brilliant! Your Stacker 1 is in Spello. Its next exit will cost 0 AP. Use this self-crushing tactic to save points in the long run. The port is yours!",
+                t_title1: "The Goal", t_txt1: "Welcome to the terminal! The goal is to accumulate Freight Points (PF) by loading the ship according to strict plans.", t_title2: "Freight Points", t_txt2: "Each container yields different points: Heavy=1 PF, Medium=2 PF, up to Twin=5 PF! Crane 1 requires 2 Heavies (Black) to start. Follow the green halo!", t_txt3: "TURN 1. You have 4 Moves per turn. These Moves are your action energy! Select your blue Stacker (S1) in the fleet above.", t_txt4: "Machines are essential: without them parked at a pile, you can't interact! Park the Stacker on Pile 2 in the central Navigator (-1 Move).", t_txt5: "The Stacker (S) ONLY takes the container at the front. Click on the Heavy (Black) container in the detailed view.", t_txt6: "To send this container to the ship, click on Crane 1. This validates the load and starts the foundation (-1 Move)!", t_txt7: "You have 2 Moves left. Select the large yellow Transtainer (T).", t_txt8: "The Transtainer is powerful, but moving it costs precious Moves! Move it to Pile 4 (-1 Move).", t_txt9: "Unlike the Stacker, the Transtainer can dive to grab any container at the top. Grab the Heavy (Black) container from the 3rd column.", t_txt10: "Send it to Crane 1 (-1 Move). Foundation A is ready!", t_txt11: "Your 4 Moves are exhausted. Click on PASS (red button).", t_title_ia: "AI Turn", t_txt_ia: "AI Turn: The AI moves the Transtainer to Pile 2. Warning: The Transtainer imposes a Safety Zone on its pile and the two adjacent ones. Your Stacker was there: it's expelled to the Spello Zone for safety!", t_txt12: "TURN 2 (4 Moves). Your Stacker is in Spello. Select it.", t_txt13: "EXITING Spello costs 0 Move! Park on Pile 5.", t_txt14: "Level B requires a Heavy (Black), blocked by a Light (White) at the front. Take the White.", t_txt15: "STACKER SHIFT: A Stacker only shifts to an adjacent pile! Click on Pile 6 to drop the White (-1 Move). You can also use this to block an opponent!", t_txt16: "The Heavy (Black) container is now free! Take it.", t_txt17: "Send it to Crane 1 (-1 Move).", t_txt18: "You have 2 Moves left. Click on Pile 2 in the Navigator to view the Transtainer.", t_txt19: "Select the Transtainer by clicking its token parked at the bottom!", t_txt20: "Crane 1 then wants a Medium (Gray), blocked by a Light (White). Take the White.", t_txt21: "TRANSTAINER SHIFT: The T shifts within its OWN pile. Click the ⬇️ arrow on the empty column next to it (-1 Move).", t_txt22: "Take the newly accessible Medium (Gray) container.", t_txt23: "Send it to Crane 1 (-1 Move). The structure rises!", t_txt24: "Turn over, click on PASS.", t_title_end: "Tutorial Finished!", t_txt_end: "You have mastered placement legality, parking selection, shifting, and the Safety Zone. The port is yours!",
+                t_solo_title1: "The Suspender Test", 
+                t_solo_txt1: "Welcome to Solo mode! The goal is to seal the 3 Decks using the LEAST amount of Moves possible. Each move increases your counter.",
+                t_solo_title2: "Stacker Coordination", 
+                t_solo_txt2: "The key is using the right machine. Select Stacker 1 (S1 - Blue) parked on Pile 1.",
+                t_solo_txt3: "Park it on Pile 2 (+1 Move). Stacker advantage: moving to ANY other pile always costs 1 Move, regardless of distance!",
+                t_solo_txt4: "Take the Heavy (Black) container at the front.",
+                t_solo_txt5: "Send it to Crane 1 (+1 Move).",
+                t_solo_txt6: "The crane needs another Heavy. Instead of crossing the port with S1, use your second machine! Select Stacker 2 (S2 - Red). Notice it is in the 'Spello' zone.",
+                t_solo_txt7: "Move S2 to Pile 9 (+0 Move). Exiting the Spello zone is always free!",
+                t_solo_txt_shift1: "The Heavy (Black) at the front is blocked by a Light (White). Take this Light.",
+                t_solo_txt_shift2: "STACKER SHIFT: The Stacker shifts ONLY to an adjacent pile with free space. Click on Pile 10 to drop the White (+1 Move).",
+                t_solo_txt8: "The Heavy (Black) is now freed! Take it.",
+                t_solo_txt9: "Send it to Crane 1 (+1 Move).",
+                t_solo_txt10: "We need one last Heavy. The only one left is deeply buried in Pile 2! S1 cannot reach it. Select the Transtainer (Yellow).",
+                t_solo_txt11: "Move it to Pile 2 (+3 Moves). The Transtainer is heavy: it costs 1 Move per pile crossed! It also has a Safety Zone: Stackers cannot enter its pile or adjacent ones. Warning: it will crush your Blue Stacker!",
+                t_solo_title3: "The Spello-Trick", 
+                t_solo_txt12: "That's the Spello-Trick! S1 was expelled to Spello. Since you had to move the Transtainer anyway, you picked up your Stacker for free. Its next exit will cost 0 Move!",
+                t_solo_txt13: "The Transtainer can dive. Take the Light (White) on top that blocks our Heavy.",
+                t_solo_txt14: "SHIFT: The Transtainer needs an incomplete column in its OWN pile to shift. Click the ⬇️ arrow on column 4 next to it (+1 Move).",
+                t_solo_txt15: "There is still a Medium (Gray) container hiding our Heavy! Take it.",
+                t_solo_txt16: "Shift this Medium container into column 2 (+1 Move).",
+                t_solo_txt17: "Finally! Take the freed Heavy (Black) container at the bottom of column 3.",
+                t_solo_txt18: "Send it to Crane 1 (+1 Move).",
+                t_solo_txt19: "You have mastered machine coordination and the Spello-Trick! The port is yours!",
                 tab_easy_desc: "The pool is simplified (Light, Medium, Heavy). Perfect to master the Spello zone and Shifts.",
                 tab_med_desc: "The standard pool with Reefers, Hazards, and Twins. The original experience.",
                 tab_hard_desc: "Giant grids. Special containers are scarce. You will need to dig up the entire port. Get ready.",
@@ -240,8 +290,21 @@
                     { type: 'action', target: 'DETAIL_COL_0', targetPile: 1, actionType: 'select_block', args: [0], text: t('t_solo_txt4') },
                     { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: t('t_solo_txt5') },
                     { type: 'action', target: 'FLEET_S1', actionType: 'select_machine', args: ['S', 1], text: t('t_solo_txt6') },
-                    { type: 'action', target: 'NAV_1', actionType: 'move_machine', args: [1], text: t('t_solo_txt7') },
-                    { type: 'info', title: t('t_solo_title3'), text: t('t_solo_txt8'), action: 'end' }
+                    { type: 'action', target: 'NAV_8', actionType: 'move_machine', args: [8], text: t('t_solo_txt7') },
+                    { type: 'action', target: 'DETAIL_COL_0', targetPile: 8, actionType: 'select_block', args: [0], text: t('t_solo_txt_shift1') },
+                    { type: 'action', target: 'NAV_9', actionType: 'shift_nav', args: [9], text: t('t_solo_txt_shift2') },
+                    { type: 'action', target: 'DETAIL_COL_0', targetPile: 8, actionType: 'select_block', args: [0], text: t('t_solo_txt8') },
+                    { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: t('t_solo_txt9') },
+                    { type: 'action', target: 'FLEET_T', actionType: 'select_machine', args: ['T', 'T'], text: t('t_solo_txt10') },
+                    { type: 'action', target: 'NAV_1', actionType: 'move_machine', args: [1], text: t('t_solo_txt11') },
+                    { type: 'info', title: t('t_solo_title3'), text: t('t_solo_txt12') },
+                    { type: 'action', target: 'DETAIL_COL_2', targetPile: 1, actionType: 'select_block', args: [2], text: t('t_solo_txt13') },
+                    { type: 'action', target: 'DETAIL_SHIFT_3', targetPile: 1, actionType: 'shift_detail', args: [3], text: t('t_solo_txt14') },
+                    { type: 'action', target: 'DETAIL_COL_2', targetPile: 1, actionType: 'select_block', args: [2], text: t('t_solo_txt15') },
+                    { type: 'action', target: 'DETAIL_SHIFT_1', targetPile: 1, actionType: 'shift_detail', args: [1], text: t('t_solo_txt16') },
+                    { type: 'action', target: 'DETAIL_COL_2', targetPile: 1, actionType: 'select_block', args: [2], text: t('t_solo_txt17') },
+                    { type: 'action', target: 'CRANE_0', actionType: 'click_crane', args: [0], text: t('t_solo_txt18') },
+                    { type: 'info', title: "Tutoriel Terminé", text: t('t_solo_txt19'), action: 'end' }
                 ];
             }
             return [ 
@@ -286,7 +349,7 @@
             return { name: name, layout: grid };
         };
 
-        // BASES DE DONNÉES CORRIGÉES (Anti-Chandelles et Zéro Flottaison)
+        // BASES DE DONNÉES CORRIGÉES
         const EASY_BAYS = [
             parseGrid("LLLL|MMM|HMH|HH", "B-F01"), parseGrid("LLLL|LML|HMH|HH", "B-F02"), parseGrid("LLLL|MMM|MMM|HH", "B-F03"),
             parseGrid("MMMM|MMM|HHH|HH", "B-F04"), parseGrid("LLLL|MMM|HHH|HH", "B-F05"), parseGrid("LLLL|LML|HMH|HH", "B-F06"),
@@ -294,7 +357,6 @@
             parseGrid("MMMM|HMH|HMH|HH", "B-F10")
         ];
         
-        // NOUVEAUX DECKS FACILES : Bases larges, pyramides, P1/P2 autorisés en base.
         const EASY_DECKS = [
             parseGrid("_____|_LLL_|_MMM_|_HHH_", "D-F01"), parseGrid("_____|__L__|_MMM_|LHHHL", "D-F02"), parseGrid("_____|_____|_MMM_|LHHHL", "D-F03"),
             parseGrid("_____|_LLL_|_MHM_|HHMHH", "D-F04"), parseGrid("__L__|_MMM_|_HHH_|_HHH_", "D-F05"), parseGrid("_____|_LLL_|_MHM_|_HHH_", "D-F06"),
@@ -309,7 +371,6 @@
             parseGrid("LMML|RZR|HRH|HT", "B-M10")
         ];
         
-        // NOUVEAUX DECKS MOYENS : Formes stables, respect absolu de la CdG.
         const MED_DECKS = [
             parseGrid("__L__|_MZM_|_MRM_|_THH_", "D-M01"), parseGrid("_____|_RZR_|_HHH_|_HHH_", "D-M02"), parseGrid("__L__|_MZM_|_MRM_|LTHHL", "D-M03"),
             parseGrid("__L__|_LLL_|_RZR_|_THH_", "D-M04"), parseGrid("_____|_MZM_|_HRH_|MTHHM", "D-M05"), parseGrid("_____|__L__|_RZR_|_THH_", "D-M06"),
@@ -324,7 +385,6 @@
             parseGrid("_LLLL_|ZRMRM|MHMHM|THHH", "B-D10")
         ];
         
-        // NOUVEAUX DECKS DIFFICILES (7x4) : Pyramides massives, sans trous, Ratio 1/6 max.
         const HARD_DECKS = [
             parseGrid("__LLL__|_MRZRM_|_MHHHM_|_HHTHH_", "D-D01"), parseGrid("___L___|__MZM__|_MRHRM_|_HHTHH_", "D-D02"), parseGrid("__LLL__|_MMZMM_|_HHMHH_|_HHTHH_", "D-D03"),
             parseGrid("___L___|__RZR__|_MHHHM_|_MHHHM_", "D-D04"), parseGrid("__LLL__|__MZM__|_MRHRM_|_THHHM_", "D-D05"), parseGrid("___L___|__RZR__|__HHH__|_MHHHM_", "D-D06"),
@@ -383,7 +443,7 @@
             for(let i=0; i<5; i++) code += chars.charAt(Math.floor(Math.random() * chars.length)); return code;
         };
 
-        // --- COMPOSANTS DE RENDU PREMIUM ---
+        // --- COMPOSANTS DE RENDU ---
         const BlockTile = ({ blockId, isSelected, isAccessible, status, isMini, t }) => {
           if (!blockId) return <div className="w-full h-full"></div>;
           const b = BLOCK_TYPES[blockId];
@@ -441,6 +501,96 @@
           );
         };
 
+        // --- NOUVEAUX COMPOSANTS VISUELS MACHINERIE ---
+        const MachineProfile = ({ player, isActive, targetRow = 0 }) => {
+            let endX = 80;
+            let endY = 20;
+
+            if (isActive) {
+                // RÈGLE DE LA BIBLE (Section 3) : L'extension du bras est figée à 135.
+                // C'est le châssis (en CSS) qui parcourt la distance dynamique.
+                endX = 135; 
+                // Seul l'axe Y s'adapte à la hauteur du conteneur (0, 1 ou 2).
+                endY = 40 - (targetRow * 52);
+            }
+
+            const armColor = player === 0 ? '#3b82f6' : '#ef4444'; // blue-500 / red-500
+            const chassisColor = player === 0 ? '#2563eb' : '#dc2626'; // blue-600 / red-600
+
+            return (
+                <svg viewBox="0 0 140 100" className={`w-full h-full drop-shadow-xl overflow-visible`}>
+                    {/* BOOM (Bras Télescopique Dynamique) */}
+                    <g>
+                        <line x1="30" y1="60" x2={endX} y2={endY} stroke="#334155" strokeWidth="8" strokeLinecap="round" />
+                        <line x1="15" y1="70" x2={30 + (endX-30)*0.5} y2={60 + (endY-60)*0.5} stroke={armColor} strokeWidth="16" strokeLinecap="round" />
+                        <line x1="40" y1="80" x2={30 + (endX-30)*0.3} y2={60 + (endY-60)*0.3} stroke="#cbd5e1" strokeWidth="4" />
+                    </g>
+
+                    {/* SPREADER */}
+                    <g transform={`translate(${endX}, ${endY})`}>
+                        <path d="M -8,-12 L 8,-12 L 8,0 L -8,0 Z" fill="#0f172a" />
+                        <rect x="-26" y="0" width="52" height="8" fill="#eab308" stroke="#0f172a" strokeWidth="1" />
+                        <path d="M -22,0 L -18,8 M -12,0 L -8,8 M -2,0 L 2,8 M 8,0 L 12,8 M 18,0 L 22,8" stroke="#0f172a" strokeWidth="2.5" />
+                        <rect x="-25" y="8" width="4" height="12" fill="#1e293b" />
+                        <rect x="21" y="8" width="4" height="12" fill="#1e293b" />
+                    </g>
+
+                    {/* CHÂSSIS DE LA MACHINE */}
+                    <path d="M 5,85 L 5,45 L 25,45 L 35,65 L 90,65 L 90,85 Z" fill={chassisColor} stroke="#0f172a" strokeWidth="1.5" />
+                    <path d="M 5,85 L 5,45 L 18,45 L 18,85 Z" fill="#0f172a" opacity="0.25" />
+                    <line x1="40" y1="75" x2="85" y2="75" stroke="#0f172a" strokeWidth="1.5" opacity="0.5" />
+
+                    {/* Cabine Centrale */}
+                    <polygon points="45,65 45,35 60,35 65,65" fill="#1e293b" stroke="#0f172a" strokeWidth="1.5" />
+                    <polygon points="47,63 47,38 58,38 62,63" fill="#38bdf8" opacity="0.85" />
+                    <line x1="47" y1="48" x2="60" y2="48" stroke="#0f172a" strokeWidth="1.5" />
+                    <line x1="53" y1="38" x2="53" y2="63" stroke="#0f172a" strokeWidth="1.5" />
+
+                    {/* Roues */}
+                    <circle cx="20" cy="82" r="14" fill="#0f172a" />
+                    <circle cx="20" cy="82" r="7" fill="#cbd5e1" />
+                    <circle cx="20" cy="82" r="3" fill="#0f172a" />
+                    <circle cx="75" cy="82" r="14" fill="#0f172a" />
+                    <circle cx="75" cy="82" r="7" fill="#cbd5e1" />
+                    <circle cx="75" cy="82" r="3" fill="#0f172a" />
+                </svg>
+            );
+        };
+
+        const TranstainerTrolley = ({ isActive, targetRow }) => {
+            const baseCable = 20;
+            const dropPerLevel = 52; 
+            // Hauteur calculée pour s'arrêter sur le conteneur
+            const dropY = isActive ? (150 - (targetRow * dropPerLevel)) : baseCable;
+
+            return (
+                <div className="absolute top-0 flex flex-col items-center z-50 transition-all duration-200 ease-out overflow-visible"
+                     style={{ width: '60px', marginLeft: '-30px', transform: 'translateY(-4px)' }}>
+                    
+                    <svg viewBox="-40 0 80 200" className="overflow-visible w-full h-full drop-shadow-xl">
+                        {/* Câbles (Descendent dynamiquement) */}
+                        <line x1="-12" y1="20" x2="-12" y2={dropY} stroke="#94a3b8" strokeWidth="2" />
+                        <line x1="12" y1="20" x2="12" y2={dropY} stroke="#94a3b8" strokeWidth="2" />
+                        
+                        {/* Chariot / Moteur (Harmonisé avec le Stacker) */}
+                        <path d="M -25,0 L 25,0 L 30,20 L -30,20 Z" fill="#eab308" stroke="#0f172a" strokeWidth="2" strokeLinejoin="round" />
+                        <rect x="-15" y="4" width="30" height="10" fill="#1e293b" stroke="#0f172a" strokeWidth="1.5" rx="2" />
+                        <circle cx="-6" cy="9" r="2" fill="#38bdf8" />
+                        <circle cx="6" cy="9" r="2" fill="#38bdf8" />
+
+                        {/* SPREADER (Le Rack exact du Stacker copié-collé) */}
+                        <g transform={`translate(0, ${dropY})`}>
+                            <path d="M -8,-12 L 8,-12 L 8,0 L -8,0 Z" fill="#0f172a" />
+                            <rect x="-26" y="0" width="52" height="8" fill="#eab308" stroke="#0f172a" strokeWidth="1" />
+                            <path d="M -22,0 L -18,8 M -12,0 L -8,8 M -2,0 L 2,8 M 8,0 L 12,8 M 18,0 L 22,8" stroke="#0f172a" strokeWidth="2.5" />
+                            <rect x="-25" y="8" width="4" height="12" fill="#1e293b" />
+                            <rect x="21" y="8" width="4" height="12" fill="#1e293b" />
+                        </g>
+                    </svg>
+                </div>
+            );
+        };
+
         // --- APPLICATION PRINCIPALE ---
         function App() {
           const [lang, setLang] = useState('fr');
@@ -473,18 +623,16 @@
           const [playerNameInput, setPlayerNameInput] = useState('');
           const [qualifiesForLeaderboard, setQualifiesForLeaderboard] = useState(false);
 
-          // States du Formulaire de Feedback (AJAX)
-          const [showFeedback, setShowFeedback] = useState(false);
-          const [feedbackText, setFeedbackText] = useState("");
-          const [feedbackStatus, setFeedbackStatus] = useState(""); // '', 'sending', 'success', 'error'
-
           const [isAIEnabled, setIsAIEnabled] = useState(false);
           const [aiDifficulty, setAiDifficulty] = useState('moyen');
 
           const [tutorialState, setTutorialState] = useState(null); 
           const [tutorialSnapshots, setTutorialSnapshots] = useState({});
 
-          // Fonction d'envoi AJAX vers l'e-mail
+          const [showFeedback, setShowFeedback] = useState(false);
+          const [feedbackText, setFeedbackText] = useState("");
+          const [feedbackStatus, setFeedbackStatus] = useState(""); 
+
           const handleFeedbackSubmit = async () => {
               if (!feedbackText.trim()) return;
               setFeedbackStatus('sending');
@@ -648,6 +796,47 @@
               setTutorialState({ step: 0, active: true, minimized: false, mode: 'multi' }); setLobbyMode('game');
           };
 
+          const startSoloTutorial = () => {
+              const tutState = createInitialState('solo', 9999, 'facile');
+              tutState.gameMode = 'solo';
+              tutState.pgUsed = 0;
+              tutState.message = t('t_solo_title1');
+              
+              tutState.cranes[0].bayData = enrichLayout(EASY_BAYS[0].layout); 
+              tutState.cranes[0].deckData = enrichLayout(EASY_DECKS[0].layout);
+              tutState.cranes[0].name = "1";
+              tutState.cranes[0].phase = 'bay';
+              tutState.cranes[0].progress = 0;
+
+              tutState.cour = generateInitialCour(9999, 'facile'); 
+
+              for(let p=0; p<10; p++) {
+                  for(let c=0; c<4; c++) {
+                      if(tutState.cour[p][c].length > 0) {
+                          let topIdx = tutState.cour[p][c].length - 1;
+                          if(tutState.cour[p][c][topIdx] === 'H') {
+                              tutState.cour[p][c][topIdx] = 'M'; 
+                          }
+                      }
+                  }
+              }
+              
+              tutState.cour[1][0] = ['M', 'L', 'H']; 
+              tutState.cour[1][1] = ['H', 'M'];      
+              tutState.cour[1][2] = ['H', 'M', 'L']; 
+              tutState.cour[1][3] = ['H', 'M'];      
+
+              tutState.cour[8][0] = ['H', 'L']; 
+              tutState.cour[9][0] = ['M']; 
+              
+              tutState.stackers[0] = 0; 
+              tutState.stackers[1] = null; 
+              tutState.transtainer = 4; 
+              
+              setTutorialSnapshots({}); setG(tutState); setRoomId(null); setMySeat(0); setActivePileIdx(0); setIsAIEnabled(false);
+              setTutorialState({ step: 0, active: true, minimized: false, mode: 'solo' }); setLobbyMode('game');
+          };
+
           const processTutorialAction = (actionType, args) => {
               if (!tutorialState || !tutorialState.active) return true; 
               const currentSteps = getTutorialSteps(t, tutorialState.mode);
@@ -659,6 +848,21 @@
               }
               setLocalMsg("❌ Action incorrecte."); setTimeout(() => setLocalMsg(""), 2500);
               return false;
+          };
+
+          const previousTutorialStep = () => {
+              if (tutorialState && tutorialState.step > 0) {
+                  const prevStep = tutorialState.step - 1;
+                  const snap = tutorialSnapshots[prevStep];
+                  if (snap) {
+                      setG(JSON.parse(JSON.stringify(snap.G)));
+                      setActivePileIdx(snap.activePileIdx);
+                      setSelected(snap.selected ? JSON.parse(JSON.stringify(snap.selected)) : null);
+                      setTutorialState(prev => ({...prev, step: prevStep}));
+                      setLocalMsg(t('step_rewind'));
+                      setTimeout(() => setLocalMsg(""), 2500);
+                  }
+              }
           };
 
           const resetTutorialSelection = () => {
@@ -789,7 +993,7 @@
 
           const handlePileNavigatorClick = (pIdx) => {
               if (!canInteract) { setActivePileIdx(pIdx); return; }
-              if (tutorialState && tutorialState.active) { const stepData = getTutorialSteps(t)[tutorialState.step]; if (stepData && stepData.actionType === 'navigate') { if (processTutorialAction('navigate', [pIdx])) { setActivePileIdx(pIdx); } return; } }
+              if (tutorialState && tutorialState.active) { const stepData = getTutorialSteps(t, tutorialState.mode)[tutorialState.step]; if (stepData && stepData.actionType === 'navigate') { if (processTutorialAction('navigate', [pIdx])) { setActivePileIdx(pIdx); } return; } }
               if (selected?.type === 'machine') { handleMachineMove(pIdx); setActivePileIdx(pIdx); return; }
               if (selected?.type === 'block' && selected.machine === 'S') { if (Math.abs(pIdx - selected.pile) === 1) { handleShiftDestination(pIdx, null); return; } else { setActivePileIdx(pIdx); return; } }
               if (selected?.type === 'block' && selected.machine === 'T') { if (pIdx !== selected.pile) { } setActivePileIdx(pIdx); return; }
@@ -803,7 +1007,7 @@
                   const dist = Math.abs(targetPileIdx - G.transtainer);
                   if (dist === 0) { setSelected(null); return; }
                   if (G.gameMode !== 'solo' && G.ap < dist) { setLocalMsg(t('msg_err_pg')); return; }
-                  mutateG(draft => { if (draft.gameMode === 'solo') draft.pgUsed += dist; else draft.ap -= dist; draft.transtainer = targetPileIdx; let bumped = false; if (draft.stackers[0] !== null && Math.abs(draft.stackers[0] - targetPileIdx) <= 1) { draft.stackers[0] = null; bumped = true; } if (draft.stackers[1] !== null && Math.abs(draft.stackers[1] - targetPileIdx) <= 1) { draft.stackers[1] = null; bumped = true; } draft.message = `🟡 T P${targetPileIdx+1} (${draft.gameMode==='solo'?'+':'-'}${dist}). ${bumped ? 'Spello!' : ''}`; });
+                  mutateG(draft => { if (draft.gameMode === 'solo') draft.pgUsed += dist; else draft.ap -= dist; draft.transtainer = targetPileIdx; let bumped = false; if (draft.stackers[0] !== null && Math.abs(draft.stackers[0] - targetPileIdx) <= 1) { draft.stackers[0] = null; bumped = true; } if (draft.stackers[1] !== null && Math.abs(draft.stackers[1] - targetPileIdx) <= 1) { draft.stackers[1] = null; bumped = true; } draft.message = `🟡 T P${targetPileIdx+1} (${draft.gameMode==='solo'?'+':'-'}${dist} Moves). ${bumped ? 'Spello!' : ''}`; });
                   setSelected(null); setLocalMsg("");
               } else {
                   const targetStacker = selected.id; 
@@ -811,7 +1015,7 @@
                   if (Math.abs(targetPileIdx - G.transtainer) <= 1) { setLocalMsg("AURA"); return; }
                   const cost = G.stackers[targetStacker] === null ? 0 : 1;
                   if (G.gameMode !== 'solo' && G.ap < cost) { setLocalMsg(t('msg_err_pg')); return; }
-                  mutateG(draft => { if (draft.gameMode === 'solo') draft.pgUsed += cost; else draft.ap -= cost; draft.stackers[targetStacker] = targetPileIdx; const enemy = targetStacker === 0 ? 1 : 0; let bumped = false; if (draft.stackers[enemy] === targetPileIdx) { draft.stackers[enemy] = null; bumped = true; } draft.message = `🔵 S P${targetPileIdx+1} (${draft.gameMode==='solo'?'+':'-'}${cost}). ${bumped ? 'Spello!' : ''}`; });
+                  mutateG(draft => { if (draft.gameMode === 'solo') draft.pgUsed += cost; else draft.ap -= cost; draft.stackers[targetStacker] = targetPileIdx; const enemy = targetStacker === 0 ? 1 : 0; let bumped = false; if (draft.stackers[enemy] === targetPileIdx) { draft.stackers[enemy] = null; bumped = true; } draft.message = `🔵 S P${targetPileIdx+1} (${draft.gameMode==='solo'?'+':'-'}${cost} Moves). ${bumped ? 'Spello!' : ''}`; });
                   setSelected(null); setLocalMsg("");
               }
           }
@@ -828,7 +1032,7 @@
               const hasS = hasS0 || hasS1;
               if (!hasT && !hasS) { setLocalMsg(t('msg_err_machine')); return; }
               if (hasT) { setSelected({ type: 'block', machine: 'T', pile: pIdx, col: colIdx }); setLocalMsg(""); mutateG(draft => { draft.message = t('msg_select_block_t'); }); return; }
-              if (hasS) { const firstCol = getFirstAvailCol(pile); if (colIdx !== firstCol) { return; } setSelected({ type: 'block', machine: 'S', pile: pIdx, col: colIdx }); setLocalMsg(""); mutateG(draft => { draft.message = t('msg_select_block_s'); }); }
+              if (hasS) { const firstCol = getFirstAvailCol(pile); if (colIdx !== firstCol) { return; } setSelected({ type: 'block', machine: 'S', pile: pIdx, col: colIdx, stackerId: hasS0 ? 0 : 1 }); setLocalMsg(""); mutateG(draft => { draft.message = t('msg_select_block_s'); }); }
           };
 
           const handleShiftDestination = (targetPileIdx, targetColIdx) => {
@@ -845,7 +1049,7 @@
                 targetColIdx = firstNonFull; 
                 if (!processTutorialAction('shift_nav', [targetPileIdx])) return;
             }
-            mutateG(draft => { const block = draft.cour[selected.pile][selected.col].pop(); draft.cour[targetPileIdx][targetColIdx].push(block); if (draft.gameMode === 'solo') draft.pgUsed += 1; else draft.ap -= 1; draft.message = `${t('msg_shift_ok')}`; });
+            mutateG(draft => { const block = draft.cour[selected.pile][selected.col].pop(); draft.cour[targetPileIdx][targetColIdx].push(block); if (draft.gameMode === 'solo') draft.pgUsed += 1; else draft.ap -= 1; draft.message = `${t('msg_shift_ok')} (${draft.gameMode==='solo'?'+':'-'}1 Move)`; });
             setSelected(null); setLocalMsg("");
           };
 
@@ -874,7 +1078,7 @@
                     if (activeCrane.phase === 'bay') { activeCrane.phase = 'deck'; activeCrane.progress = 0; pointsEarned += 5; draft.message = t('msg_bay_ok'); } 
                     else { activeCrane.phase = 'done'; pointsEarned += 10; draft.message = t('msg_deck_ok'); } 
                 } 
-                else { draft.message = t('msg_placed'); }
+                else { draft.message = `${t('msg_placed')} (${draft.gameMode==='solo'?'+':'-'}1 Move)`; }
                 
                 if (draft.gameMode === 'solo') {
                     draft.pgUsed += 1;
@@ -887,7 +1091,7 @@
                 const requiredDecks = draft.gameMode === 'solo' ? 3 : 2;
                 if (draft.cranes.filter(c => c.phase === 'done').length >= requiredDecks) { 
                     draft.gameStatus = 'gameover'; 
-                    if (draft.gameMode === 'solo') { draft.message = `${t('game_over')} ${draft.pgUsed} PG !`; checkLeaderboardQualification(draft.pgUsed, draft.levelId).then(qualifies => { if(qualifies) setQualifiesForLeaderboard(true); }); } 
+                    if (draft.gameMode === 'solo') { draft.message = `${t('game_over')} ${draft.pgUsed} Moves !`; checkLeaderboardQualification(draft.pgUsed, draft.levelId).then(qualifies => { if(qualifies) setQualifiesForLeaderboard(true); }); } 
                     else { const winner = draft.players[0].score > draft.players[1].score ? "J1 " + t('win') : "J2 " + t('win'); draft.message = `${t('game_over')} ${winner} !`; }
                 }
             });
@@ -899,7 +1103,7 @@
               const target = G.gameMode === 'solo' ? stackerId : (tutorialState ? 0 : G.currentPlayer);
               if (G.stackers[target] === null) return;
               if (!processTutorialAction('voluntary_spelo', [])) return;
-              mutateG(draft => { draft.stackers[target] = null; if (draft.gameMode === 'solo') draft.pgUsed += 2; else draft.ap -= 2; draft.message = `Spello S${target+1}`; }); 
+              mutateG(draft => { draft.stackers[target] = null; if (draft.gameMode === 'solo') draft.pgUsed += 2; else draft.ap -= 2; draft.message = `Spello S${target+1} (${draft.gameMode==='solo'?'+':'-'}2 Moves)`; }); 
               setSelected(null); setLocalMsg("");
           };
           
@@ -928,7 +1132,7 @@
           const currentStepData = tutorialState?.active ? getTutorialSteps(t, tutorialState.mode)[tutorialState.step] : null;
 
           return (
-            <div className="h-[100dvh] w-screen overflow-hidden bg-slate-950 flex flex-col items-center relative">
+            <div className={`h-[100dvh] w-screen overflow-hidden flex flex-col items-center relative ${!G ? 'bg-blueprint' : 'bg-slate-950'}`}>
               
               {/* LOBBY (MENUS) */}
               {!G && (
@@ -940,21 +1144,19 @@
 
                           {lobbyMode === 'menu' && (
                               <div className="space-y-4">
-                                  <button onClick={() => setLobbyMode('online')} disabled={isAuthLoading} className={`w-full font-bold py-3 px-4 rounded shadow-lg text-sm ${isAuthLoading ? 'bg-slate-600 text-slate-400' : 'bg-blue-700 hover:bg-blue-600 text-white'}`}>
-                                      {isAuthLoading ? t('connecting') : t('btn_online')}
-                                  </button>
-                                  <div className="pt-2"></div>
-                                  <button onClick={() => setLobbyMode('solo_menu')} className="w-full font-bold py-4 px-4 rounded shadow-lg text-sm bg-orange-700 hover:bg-orange-600 text-white border border-orange-500">
+                                  {/* SOLO - MIS EN AVANT AVEC BADGE */}
+                                  <button onClick={() => setLobbyMode('solo_menu')} className="w-full relative font-bold py-4 px-4 rounded shadow-[0_0_20px_rgba(234,88,12,0.4)] text-sm bg-orange-700 hover:bg-orange-600 text-white border border-orange-500">
+                                      <span className="absolute -top-3 right-2 bg-yellow-400 text-black text-[10px] font-black px-2 py-1 rounded shadow-md transform rotate-3 flex items-center gap-1">⭐ {t('badge_recommended')}</span>
                                       {t('btn_solo')}
                                   </button>
-                                  <button onClick={() => setLobbyMode('ai')} className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded shadow-lg text-sm">
-                                      {t('btn_ai')}
+
+                                  {/* MULTIJOUEURS - REGROUPE LIGNE, IA ET TUTO */}
+                                  <button onClick={() => setLobbyMode('multi_menu')} className="w-full relative font-bold py-4 px-4 rounded shadow-lg text-sm bg-blue-700 hover:bg-blue-600 text-white border border-blue-500">
+                                      <span className="absolute -top-3 right-2 bg-purple-600 text-white text-[10px] font-black px-2 py-1 rounded shadow-md transform -rotate-3 flex items-center gap-1">🧪 {t('badge_experimental')}</span>
+                                      👥 {t('btn_multi')}
                                   </button>
+
                                   <div className="pt-4 border-t border-slate-800">
-                                      <button onClick={startInteractiveTutorial} className="w-full mb-3 bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-bold py-3 px-4 rounded border border-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.3)] text-sm transition">
-                                          {t('btn_tuto')}
-                                      </button>
-                                      
                                       {/* BOUTON FEEDBACK PRO */}
                                       <button onClick={() => setShowFeedback(true)} className="w-full mb-3 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold py-3 px-4 rounded border border-cyan-700 shadow-md text-sm transition">
                                           {t('btn_contact')}
@@ -986,6 +1188,27 @@
                               </div>
                           )}
 
+                          {/* MENU MULTIJOUEURS */}
+                          {lobbyMode === 'multi_menu' && (
+                              <div className="flex flex-col h-full w-full relative space-y-4">
+                                  <h2 className="text-xl font-bold text-blue-400 mb-2 tracking-widest text-center uppercase">👥 {t('btn_multi')}</h2>
+                                  
+                                  <button onClick={startInteractiveTutorial} className="w-full bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-bold py-3 px-4 rounded border border-emerald-600 shadow-[0_0_15px_rgba(16,185,129,0.3)] text-sm transition">
+                                      {t('btn_tuto')}
+                                  </button>
+                                  
+                                  <button onClick={() => setLobbyMode('online')} disabled={isAuthLoading} className={`w-full font-bold py-3 px-4 rounded shadow-lg text-sm border ${isAuthLoading ? 'bg-slate-600 text-slate-400 border-slate-500' : 'bg-blue-700 hover:bg-blue-600 text-white border-blue-500'}`}>
+                                      {isAuthLoading ? t('connecting') : t('btn_online')}
+                                  </button>
+                                  
+                                  <button onClick={() => setLobbyMode('ai')} className="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-3 px-4 rounded border border-purple-500 shadow-lg text-sm">
+                                      {t('btn_ai')}
+                                  </button>
+
+                                  <button onClick={() => setLobbyMode('menu')} className="w-full mt-4 bg-transparent text-slate-400 py-2 rounded text-xs underline font-bold hover:text-white transition">{t('back')}</button>
+                              </div>
+                          )}
+
                           {lobbyMode === 'solo_menu' && (
                               <div className="flex flex-col h-full w-full relative">
                                   <button onClick={() => setLobbyMode('menu')} className="absolute -top-2 -right-2 text-slate-400 hover:text-white font-bold text-xl leading-none">&times;</button>
@@ -998,7 +1221,7 @@
                                       <button onClick={() => setSoloTab('difficile')} className={`px-3 py-1.5 font-bold rounded text-xs ${soloTab === 'difficile' ? 'bg-red-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>{t('difficile')}</button>
                                   </div>
 
-                                  {/* EXPLICATIONS DE NIVEAU (Remontées en haut) */}
+                                  {/* EXPLICATIONS DE NIVEAU */}
                                   <div className="mb-4 bg-slate-800 p-3 rounded text-xs text-slate-300 border border-slate-600 text-left shadow-inner">
                                       {soloTab === 'facile' && <div><span className="text-green-400 font-bold">🟢 {t('facile')} :</span> {t('tab_easy_desc')}</div>}
                                       {soloTab === 'moyen' && <div><span className="text-yellow-400 font-bold">🟡 {t('moyen')} :</span> {t('tab_med_desc')}</div>}
@@ -1023,6 +1246,9 @@
                                   </div>
                                   
                                   <div className="flex flex-col gap-2">
+                                      <button onClick={startSoloTutorial} className="w-full bg-emerald-800 hover:bg-emerald-700 text-emerald-100 py-3 rounded text-xs font-bold border border-emerald-600 shadow-md transition mb-2">
+                                          {t('btn_tuto_solo')}
+                                      </button>
                                       <div className="flex gap-2">
                                           <button onClick={() => setShowSoloRules(true)} className="w-1/2 bg-slate-700 hover:bg-slate-600 text-white py-2 rounded text-xs font-bold border border-slate-500">{t('rules_solo')}</button>
                                           <button onClick={() => setLobbyMode('solo_leaderboard')} className="w-1/2 bg-blue-800 hover:bg-blue-700 text-white py-2 rounded text-xs font-bold border border-blue-600">{t('scores')}</button>
@@ -1066,7 +1292,7 @@
                                       <input type="text" value={joinCodeInput} onChange={(e) => setJoinCodeInput(e.target.value.toUpperCase())} placeholder="CODE" className="w-2/3 bg-slate-800 border border-slate-600 rounded px-2 text-center font-bold text-white focus:outline-none" maxLength={5} />
                                       <button onClick={joinExistingRoom} className="w-1/3 font-bold py-2 rounded shadow-lg text-sm bg-blue-700 text-white">{t('join')}</button>
                                   </div>
-                                  <button onClick={() => setLobbyMode('menu')} className="w-full bg-slate-800 text-slate-400 py-2 rounded text-xs">{t('back')}</button>
+                                  <button onClick={() => setLobbyMode('multi_menu')} className="w-full bg-slate-800 text-slate-400 py-2 rounded text-xs">{t('back')}</button>
                               </div>
                           )}
 
@@ -1075,7 +1301,7 @@
                                   <button onClick={() => { setAiDifficulty('facile'); startLocalGame(true); }} className="w-full bg-green-700 text-white font-bold py-3 rounded">{t('facile')}</button>
                                   <button onClick={() => { setAiDifficulty('moyen'); startLocalGame(true); }} className="w-full bg-yellow-600 text-white font-bold py-3 rounded">{t('moyen')}</button>
                                   <button onClick={() => { setAiDifficulty('difficile'); startLocalGame(true); }} className="w-full bg-red-700 text-white font-bold py-3 rounded">{t('difficile')}</button>
-                                  <button onClick={() => setLobbyMode('menu')} className="w-full bg-slate-800 text-slate-400 py-2 rounded text-xs">{t('back')}</button>
+                                  <button onClick={() => setLobbyMode('multi_menu')} className="w-full bg-slate-800 text-slate-400 py-2 rounded text-xs">{t('back')}</button>
                               </div>
                           )}
                       </div>
@@ -1099,7 +1325,7 @@
                                               <span className={`font-black ${i===0?'text-yellow-400 text-lg':i===1?'text-slate-300':i===2?'text-amber-600':'text-slate-500'}`}>#{i+1}</span>
                                               <span className="font-bold text-white uppercase tracking-wider">{s.name}</span>
                                           </div>
-                                          <div className="font-mono text-orange-400 font-bold bg-black px-2 py-1 rounded">{s.pg} PG</div>
+                                          <div className="font-mono text-orange-400 font-bold bg-black px-2 py-1 rounded">{s.pg} Moves</div>
                                       </div>
                                   ))
                               )}
@@ -1113,7 +1339,7 @@
                   JEU PRINCIPAL (HUD DYNAMIQUE SOLO/MULTI)
               ============================================= */}
               {G && (
-                <div className="h-full w-full flex flex-col p-1 sm:p-2 gap-1.5 relative">
+                <div className="h-full w-full flex flex-col p-1 sm:p-2 gap-1.5 relative z-10">
                   
                   {/* 1. HEADER */}
                   <div className="flex-none flex justify-between items-start bg-slate-900 p-1 md:p-2 rounded border border-slate-800 shadow-md">
@@ -1128,9 +1354,9 @@
                     
                     <div className="flex flex-col items-center justify-center flex-1 mt-0.5">
                       <div className="flex items-center gap-1 mb-0.5">
-                         <button onClick={() => setShowMenuConfirm(true)} className="text-[10px] bg-slate-700 text-white px-2 py-0.5 rounded">🏠</button>
-                         <button onClick={() => setShowNewGameConfirm(true)} disabled={!canInteract} className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded">🔄</button>
-                         <button onClick={() => G.gameMode === 'solo' ? setShowSoloRules(true) : setShowRules(true)} className="text-[10px] bg-slate-700 text-blue-300 font-bold px-2 py-0.5 rounded">📖</button>
+                         <button onClick={() => setShowMenuConfirm(true)} className="text-[10px] bg-slate-700 text-white px-2 py-0.5 rounded shadow-sm hover:bg-slate-600 transition-colors">🏠</button>
+                         {!tutorialState && <button onClick={() => setShowNewGameConfirm(true)} className="text-[10px] bg-emerald-700 text-white px-2 py-0.5 rounded shadow-sm hover:bg-emerald-600 transition-colors">🔄</button>}
+                         <button onClick={() => G.gameMode === 'solo' ? setShowSoloRules(true) : setShowRules(true)} className="text-[10px] bg-slate-700 text-blue-300 font-bold px-2 py-0.5 rounded shadow-sm hover:bg-slate-600 transition-colors">📖</button>
                       </div>
                       
                       {roomId && G.gameMode !== 'solo' && !tutorialState && (
@@ -1146,9 +1372,9 @@
                         ) : (
                             <span className="text-[10px] text-yellow-400 font-bold bg-black px-2 py-0.5 rounded border border-yellow-600">{t('pg')} {G.ap}/4</span>
                         )}
-                        <button onClick={handleUndo} disabled={!G.history?.length || !canInteract || tutorialState} className="px-1.5 py-0.5 rounded border text-[10px] bg-slate-700 text-white">{t('undo')}</button>
+                        <button onClick={handleUndo} disabled={!G.history?.length || !canInteract || tutorialState} className="px-1.5 py-0.5 rounded border text-[10px] bg-slate-700 text-white shadow-sm hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">{t('undo')}</button>
                         {G.gameMode !== 'solo' && (
-                            <button onClick={endTurn} disabled={!canInteract && !tutorialState} className={`px-2 py-0.5 rounded font-bold text-[10px] bg-red-700 text-white ${getTutoClass('PASS_BTN')}`}>{t('pass')}</button>
+                            <button onClick={endTurn} disabled={!canInteract && !tutorialState} className={`px-2 py-0.5 rounded font-bold text-[10px] bg-red-700 text-white shadow-sm hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${getTutoClass('PASS_BTN')}`}>{t('pass')}</button>
                         )}
                       </div>
                     </div>
@@ -1211,9 +1437,9 @@
                               <div className="h-full aspect-square shrink-0 pointer-events-none">{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>
                           </div>
                           <div className="border-l border-slate-700 pl-2 flex items-center justify-center flex-1">
-                              <button onClick={() => handleVoluntarySpelo(selected?.type==='machine' && selected.id !== 'T' ? selected.id : 0)} className="flex flex-col items-center justify-center bg-slate-800 border border-slate-600 rounded px-2 h-full w-full max-w-[100px]">
+                              <button onClick={() => handleVoluntarySpelo(selected?.type==='machine' && selected.id !== 'T' ? selected.id : 0)} className="flex flex-col items-center justify-center bg-slate-800 border border-slate-600 rounded px-2 h-full w-full max-w-[100px] hover:bg-slate-700 transition-colors">
                                   <span className="text-[clamp(8px,1.4vh,12px)] font-bold text-slate-300 leading-none">{t('spello')}</span>
-                                  <span className="text-[clamp(6px,1vh,9px)] text-slate-500 leading-none">(2 PG)</span>
+                                  <span className="text-[clamp(6px,1vh,9px)] text-slate-500 leading-none">(2 Moves)</span>
                               </button>
                           </div>
                       </div>
@@ -1233,20 +1459,20 @@
 
                               return (
                                   <div key={pIdx} onClick={() => handlePileNavigatorClick(pIdx)} 
-                                       className={`relative flex flex-col items-center flex-1 rounded bg-slate-900 h-full justify-end pb-1 border-t-2 border-b-2
-                                          ${isActiveView ? 'border-white bg-slate-800 scale-105 z-10 shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'border-slate-800'}
+                                       className={`relative flex flex-col items-center flex-1 rounded bg-slate-900 h-full justify-end pb-1 border-t-2 border-b-2 cursor-pointer
+                                          ${isActiveView ? 'border-white bg-slate-800 scale-105 z-10 shadow-[0_0_10px_rgba(255,255,255,0.2)]' : 'border-slate-800 hover:bg-slate-800/80'}
                                           ${isTAura && !isActiveView ? 'border-t-red-900 bg-red-950/20' : ''}
                                           ${isValidShiftTarget ? 'border-yellow-400 bg-yellow-900/30 animate-pulse' : ''}
                                           ${getTutoClass('NAV_'+pIdx)}
                                        `}
                                   >
-                                      <div className="absolute top-1 w-full flex justify-center pointer-events-none">
-                                          {isT && <div className="w-[35%] max-w-[12px] aspect-square bg-yellow-500 rounded-[2px] shadow-sm z-20"></div>}
+                                      {/* REGROUPEMENT DES JETONS MACHINES (En haut de la pile) */}
+                                      <div className="absolute top-1 w-full flex justify-center gap-[2px] pointer-events-none z-20">
+                                          {isT && <div className="w-[35%] max-w-[12px] aspect-square bg-yellow-500 rounded-[2px] shadow-sm"></div>}
+                                          {isS1 && <div className="w-[35%] max-w-[12px] aspect-square bg-blue-600 rounded-full shadow-sm border border-white/50"></div>}
+                                          {isS2 && <div className="w-[35%] max-w-[12px] aspect-square bg-red-600 rounded-full shadow-sm border border-white/50"></div>}
                                       </div>
-                                      <div className="absolute left-[5%] top-1/2 transform -translate-y-1/2 flex flex-col gap-[2px] w-[25%] max-w-[8px] z-20 pointer-events-none">
-                                          {isS1 && <div className="w-full aspect-square bg-blue-600 rounded-full shadow-sm border border-white/50"></div>}
-                                          {isS2 && <div className="w-full aspect-square bg-red-600 rounded-full shadow-sm border border-white/50"></div>}
-                                      </div>
+                                      
                                       <div className="flex gap-[1px] items-end justify-center w-full h-[55%] px-[2px] z-10 pointer-events-none">
                                           {pile.map((col, cIdx) => (
                                               <div key={cIdx} className="flex flex-col-reverse justify-start gap-[1px] w-1/4 max-w-[8px] h-full">
@@ -1265,64 +1491,170 @@
 
                   {/* 5. VUE DÉTAILLÉE */}
                   <div className="flex-[1.2] min-h-0 w-full bg-slate-900 border-2 border-slate-700 rounded-xl p-2 shadow-inner flex flex-col items-center relative overflow-hidden">
-                      <button onClick={() => setActivePileIdx(prev => prev > 0 ? prev - 1 : 9)} className="absolute left-0 top-0 bottom-0 w-[10%] max-w-[40px] text-slate-500 hover:text-white flex items-center justify-center font-bold text-2xl bg-gradient-to-r from-black/30 to-transparent z-10">&lt;</button>
-                      <button onClick={() => setActivePileIdx(prev => prev < 9 ? prev + 1 : 0)} className="absolute right-0 top-0 bottom-0 w-[10%] max-w-[40px] text-slate-500 hover:text-white flex items-center justify-center font-bold text-2xl bg-gradient-to-l from-black/30 to-transparent z-10">&gt;</button>
+                      {/* Aura Rouge */}
+                      {Math.abs(G.transtainer - activePileIdx) === 1 && (<div className="absolute top-0 left-12 right-12 h-1.5 bg-red-900/50 rounded-b-lg"></div>)}
 
-                      <h3 className="flex-none text-[clamp(12px,2vh,18px)] font-bold text-white mb-2 tracking-widest uppercase border-b border-slate-600 pb-1 leading-none">{t('focus')} {activePileIdx + 1}</h3>
-                      {Math.abs(G.transtainer - activePileIdx) <= 1 && (<div className="absolute top-0 left-12 right-12 h-1.5 bg-red-900/50 rounded-b-lg"></div>)}
+                      <button onClick={() => setActivePileIdx(prev => prev > 0 ? prev - 1 : 9)} className="absolute left-0 top-0 bottom-0 w-[10%] max-w-[40px] text-slate-500 hover:text-white hover:bg-slate-800/50 flex items-center justify-center font-bold text-2xl bg-gradient-to-r from-black/30 to-transparent z-10 transition-colors">&lt;</button>
+                      <button onClick={() => setActivePileIdx(prev => prev < 9 ? prev + 1 : 0)} className="absolute right-0 top-0 bottom-0 w-[10%] max-w-[40px] text-slate-500 hover:text-white hover:bg-slate-800/50 flex items-center justify-center font-bold text-2xl bg-gradient-to-l from-black/30 to-transparent z-10 transition-colors">&gt;</button>
 
-                      <div className="flex-1 min-h-0 flex items-end justify-center gap-2 sm:gap-4 w-full pb-2">
-                          <div className="text-[clamp(8px,1.5vh,12px)] text-slate-500 -rotate-90 origin-bottom-left uppercase tracking-widest mb-4 flex-none">{t('front')}</div>
+                      <h3 className="flex-none text-[clamp(12px,2vh,18px)] font-bold text-white mb-1 tracking-widest uppercase border-b border-slate-600 pb-1 leading-none z-30 pt-1">{t('focus')} {activePileIdx + 1}</h3>
+
+                      <div className="flex-1 min-h-0 flex items-end justify-center w-full pb-2 mt-8 relative">
+                          <div className="text-[clamp(8px,1.5vh,12px)] text-slate-500 -rotate-90 origin-bottom-left uppercase tracking-widest mb-4 flex-none mr-2">{t('front')}</div>
                           
-                          <div className={`w-[15vw] max-w-[70px] h-[65%] flex flex-col justify-end items-center pb-2 rounded border-b-4 bg-slate-800 cursor-pointer ${Math.abs(G.transtainer - activePileIdx) <= 1 ? 'border-red-700 bg-red-950/30' : 'border-slate-500'}`} onClick={() => handleParkingClick(activePileIdx)}>
-                              {G.transtainer === activePileIdx && <div className={`h-[45%] w-auto max-h-[50px] aspect-square mb-1.5 rounded shrink-0 ${getTutoClass('PARKING_T', activePileIdx)}`} onClick={(e) => { e.stopPropagation(); handleMachineSelect('T', 'T'); }}>{renderMachineToken('T', null, selected?.type==='machine' && selected.id==='T')}</div>}
-                              {G.stackers[0] === activePileIdx && <div className="h-[45%] w-auto max-h-[50px] aspect-square mb-1.5 shrink-0" onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 0); }}>{renderMachineToken('S', 0, selected?.type==='machine' && selected.id===0)}</div>}
-                              {G.stackers[1] === activePileIdx && <div className="h-[45%] w-auto max-h-[50px] aspect-square mb-1.5 shrink-0" onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 1); }}>{renderMachineToken('S', 1, selected?.type==='machine' && selected.id===1)}</div>}
-                              {G.stackers[0] !== activePileIdx && G.stackers[1] !== activePileIdx && G.transtainer !== activePileIdx && <span className="text-[clamp(8px,1.5vh,12px)] text-slate-500 pointer-events-none">PARK</span>}
-                          </div>
-
-                          <div className="flex gap-1.5 sm:gap-2 h-full items-end">
-                              {G.cour[activePileIdx].map((col, cIdx) => {
-                                  const isT_Here = G.transtainer === activePileIdx;
-                                  const hasS0 = (G.stackers[0] === activePileIdx) && (G.gameMode === 'solo' || G.currentPlayer === 0 || tutorialState);
-                                  const hasS1 = (G.stackers[1] === activePileIdx) && (G.gameMode === 'solo' || G.currentPlayer === 1 || tutorialState);
-                                  const isS_Here = hasS0 || hasS1;
-                                  const firstAvailCol = getFirstAvailCol(G.cour[activePileIdx]);
-
-                                  return (
-                                      <div key={cIdx} onClick={() => handleColClickDetail(cIdx)} className={`w-[12vw] max-w-[65px] h-[90%] bg-slate-950/80 rounded flex flex-col-reverse justify-start items-center p-1 border-x border-t border-slate-700 transition ${selected?.type === 'block' && selected.pile === activePileIdx && selected.col === cIdx ? 'bg-yellow-400/20 border-yellow-400' : col.length >= 3 ? 'border-b-4 border-b-slate-950' : 'border-b border-b-slate-700'} ${getTutoClass('DETAIL_COL_' + cIdx, activePileIdx)}`}>
-                                          {col.map((blockId, bIdx) => {
-                                              const isTopBlock = bIdx === col.length - 1;
-                                              let isAccessible = false;
-                                              if (isTopBlock && canInteract) {
-                                                  if (isT_Here) isAccessible = true; 
-                                                  if (isS_Here && cIdx === firstAvailCol) isAccessible = true;
-                                              }
-
-                                              return (
-                                                  <div key={bIdx} className="h-[31%] w-auto max-h-[60px] aspect-square mb-1 shrink-0 pointer-events-none">
-                                                        <BlockTile blockId={blockId} isSelected={isTopBlock && selected?.type === 'block' && selected.pile === activePileIdx && selected.col === cIdx} isAccessible={isAccessible} status="normal" t={t} />
-                                                  </div>
-                                              );
-                                          })}
-                                          {/* Helper Visuel Shift Transtainer */}
-                                          {selected?.type === 'block' && selected.machine === 'T' && selected.pile === activePileIdx && col.length < 3 && (
-                                              <div className={`h-[31%] w-auto max-h-[60px] aspect-square shrink-0 border border-dashed border-yellow-400/50 rounded mt-1 flex items-center justify-center bg-yellow-400/10 ${getTutoClass('DETAIL_SHIFT_' + cIdx, activePileIdx)}`}>
-                                                  <span className="text-[clamp(10px,2vh,16px)] text-yellow-200 pointer-events-none">⬇️</span>
-                                              </div>
-                                          )}
+                          {/* WRAPPER RELATIF POUR ALIGNER LE PORTIQUE ET LES COLONNES */}
+                          <div className="flex h-full items-end relative gap-2">
+                              
+                              {/* LE PORTIQUE TRANSTAINER (Structure unifiée en U inversé) */}
+                              {G.transtainer === activePileIdx && (
+                                  <div className="absolute top-[-25px] left-[16px] right-[-30px] bottom-0 pointer-events-none z-40">
+                                      
+                                      {/* Barre Supérieure (Bordure haute, gauche et droite, mais PAS en bas) */}
+                                      <div className="absolute top-0 left-0 right-0 h-6 bg-yellow-500 border-t-2 border-l-2 border-r-2 border-slate-900 rounded-t-md shadow-xl flex items-center z-20">
+                                          {/* Ligne pointillée centrale */}
+                                          <div className="w-full border-b-2 border-dashed border-slate-900 opacity-30"></div>
+                                          {/* Fermeture de la poutre UNIQUEMENT au centre (entre les pattes) pour fusionner les lignes */}
+                                          <div className="absolute bottom-0 left-[30px] right-[30px] h-[2px] bg-slate-900"></div>
                                       </div>
-                                  )
-                              })}
+                                      
+                                      {/* Patte Gauche (Pilier qui s'arrête juste au-dessus du bogie) */}
+                                      <div className="absolute top-6 left-0 bottom-[10px] w-[32px] bg-yellow-500 border-l-2 border-r-2 border-slate-900 z-10"></div>
+                                      {/* Bogie Gauche (Roues massives) */}
+                                      <div className="absolute bottom-0 left-[-6px] z-20 pointer-events-none">
+                                          <svg viewBox="0 0 44 24" className="w-[44px] h-[24px] drop-shadow-xl">
+                                              <rect x="0" y="0" width="44" height="14" rx="2" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+                                              <line x1="6" y1="5" x2="38" y2="5" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+                                              <g transform="translate(11, 16)">
+                                                  <circle cx="0" cy="0" r="8" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+                                                  <circle cx="0" cy="0" r="5" fill="#334155" />
+                                                  <circle cx="0" cy="0" r="2.5" fill="#94a3b8" />
+                                                  <circle cx="0" cy="0" r="1" fill="#0f172a" />
+                                              </g>
+                                              <g transform="translate(33, 16)">
+                                                  <circle cx="0" cy="0" r="8" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+                                                  <circle cx="0" cy="0" r="5" fill="#334155" />
+                                                  <circle cx="0" cy="0" r="2.5" fill="#94a3b8" />
+                                                  <circle cx="0" cy="0" r="1" fill="#0f172a" />
+                                              </g>
+                                          </svg>
+                                      </div>
+                                      
+                                      {/* Patte Droite (Pilier qui s'arrête juste au-dessus du bogie) */}
+                                      <div className="absolute top-6 right-0 bottom-[10px] w-[32px] bg-yellow-500 border-l-2 border-r-2 border-slate-900 z-10"></div>
+                                      {/* Bogie Droit (Roues massives) */}
+                                      <div className="absolute bottom-0 right-[-6px] z-20 pointer-events-none">
+                                          <svg viewBox="0 0 44 24" className="w-[44px] h-[24px] drop-shadow-xl">
+                                              <rect x="0" y="0" width="44" height="14" rx="2" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+                                              <line x1="6" y1="5" x2="38" y2="5" stroke="#334155" strokeWidth="2" strokeLinecap="round" />
+                                              <g transform="translate(11, 16)">
+                                                  <circle cx="0" cy="0" r="8" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+                                                  <circle cx="0" cy="0" r="5" fill="#334155" />
+                                                  <circle cx="0" cy="0" r="2.5" fill="#94a3b8" />
+                                                  <circle cx="0" cy="0" r="1" fill="#0f172a" />
+                                              </g>
+                                              <g transform="translate(33, 16)">
+                                                  <circle cx="0" cy="0" r="8" fill="#1e293b" stroke="#0f172a" strokeWidth="2" />
+                                                  <circle cx="0" cy="0" r="5" fill="#334155" />
+                                                  <circle cx="0" cy="0" r="2.5" fill="#94a3b8" />
+                                                  <circle cx="0" cy="0" r="1" fill="#0f172a" />
+                                              </g>
+                                          </svg>
+                                      </div>
+                                      
+                                      {/* Chariot Mobile (Glisse via CSS `left` calculé) */}
+                                      <div 
+                                          className="absolute top-0 z-50 transition-all duration-200 ease-out pointer-events-auto cursor-pointer" 
+                                          onClick={(e) => { e.stopPropagation(); handleMachineSelect('T', 'T'); }}
+                                          style={{ 
+                                              /* On soustrait 16px car le portique entier a été décalé de 16px pour centrer la patte dans le parking */
+                                              left: selected?.type === 'block' && selected.machine === 'T' && selected.pile === activePileIdx ? `calc(min(25vw, 140px) + 8px + ${selected.col} * (min(12vw, 65px) + 8px) + (min(12vw, 65px) / 2) - 16px)` : `calc(min(25vw, 140px) / 2 - 16px)`,
+                                              height: '100%'
+                                          }}
+                                      >
+                                          <TranstainerTrolley 
+                                              isActive={selected?.type === 'block' && selected.machine === 'T' && selected.pile === activePileIdx}
+                                              targetRow={selected?.type === 'block' && selected.col !== undefined && G.cour[activePileIdx][selected.col] ? G.cour[activePileIdx][selected.col].length - 1 : -1}
+                                          />
+                                      </div>
+                                  </div>
+                              )}
+
+                              {/* Zone de Parking */}
+                              <div className={`w-[25vw] max-w-[140px] h-[65%] flex flex-col justify-end items-center pb-0 rounded cursor-pointer transition-colors z-30 relative ${Math.abs(G.transtainer - activePileIdx) === 1 ? 'border-b-4 border-red-700 bg-red-950/30' : 'border-b-4 border-slate-500 bg-slate-800 hover:bg-slate-700'}`} onClick={() => handleParkingClick(activePileIdx)}>
+                                  {/* Hitbox pour sélectionner le T s'il est au parking */}
+                                  {G.transtainer === activePileIdx && (
+                                      <div className="absolute inset-0 z-50" onClick={(e) => { e.stopPropagation(); handleMachineSelect('T', 'T'); }}></div>
+                                  )}
+                                  
+                                  {/* Stackers : V2.84 - Formule utilisant la 3ème colonne comme pivot parfait (Base 66px, Pas de 8px) */}
+                                  {G.stackers[0] === activePileIdx && (
+                                      <div 
+                                          className="w-[95%] h-auto max-h-[70px] mb-1.5 shrink-0 z-30 transition-transform duration-300 ease-in-out" 
+                                          style={{ transform: selected?.type === 'block' && selected.machine === 'S' && selected.stackerId === 0 && selected.pile === activePileIdx ? `translateX(calc(66px + ${selected.col} * (min(12vw, 65px) + 8px)))` : 'translateX(0px)' }}
+                                          onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 0); }}
+                                      >
+                                          <MachineProfile player={0} isActive={selected?.type === 'block' && selected.machine === 'S' && selected.stackerId === 0 && selected.pile === activePileIdx} targetRow={selected?.col !== undefined && G.cour[activePileIdx][selected.col] ? G.cour[activePileIdx][selected.col].length - 1 : -1} />
+                                      </div>
+                                  )}
+                                  {G.stackers[1] === activePileIdx && (
+                                      <div 
+                                          className="w-[95%] h-auto max-h-[70px] mb-1.5 shrink-0 z-30 transition-transform duration-300 ease-in-out" 
+                                          style={{ transform: selected?.type === 'block' && selected.machine === 'S' && selected.stackerId === 1 && selected.pile === activePileIdx ? `translateX(calc(66px + ${selected.col} * (min(12vw, 65px) + 8px)))` : 'translateX(0px)' }}
+                                          onClick={(e) => { e.stopPropagation(); handleMachineSelect('S', 1); }}
+                                      >
+                                          <MachineProfile player={1} isActive={selected?.type === 'block' && selected.machine === 'S' && selected.stackerId === 1 && selected.pile === activePileIdx} targetRow={selected?.col !== undefined && G.cour[activePileIdx][selected.col] ? G.cour[activePileIdx][selected.col].length - 1 : -1} />
+                                      </div>
+                                  )}
+                                  
+                                  {/* Le label PARK disparaît si le Transtainer est là */}
+                                  {G.transtainer !== activePileIdx && G.stackers[0] !== activePileIdx && G.stackers[1] !== activePileIdx && <span className="text-[clamp(8px,1.5vh,12px)] text-slate-500 pointer-events-none mb-4">PARK</span>}
+                              </div>
+
+                              {/* Zone des colonnes de blocs - Espacement figé à gap-2 (8px) pour correspondre à la formule */}
+                              <div className="flex gap-2 h-full items-end z-10">
+                                  {G.cour[activePileIdx].map((col, cIdx) => {
+                                      const isT_Here = G.transtainer === activePileIdx;
+                                      const targetStacker = tutorialState ? 0 : G.currentPlayer;
+                                      const isS_Here = G.stackers[targetStacker] === activePileIdx;
+                                      const firstAvailCol = getFirstAvailCol(G.cour[activePileIdx]);
+
+                                      return (
+                                          <div key={cIdx} onClick={() => handleColClickDetail(cIdx)} className={`w-[12vw] max-w-[65px] h-[80%] bg-slate-950/80 rounded flex flex-col-reverse justify-start items-center p-1 border-x border-t border-slate-700 transition relative overflow-visible cursor-pointer hover:bg-slate-900/80 ${selected?.type === 'block' && selected.pile === activePileIdx && selected.col === cIdx ? 'bg-yellow-400/20 border-yellow-400' : col.length >= 3 ? 'border-b-4 border-b-slate-950' : 'border-b border-b-slate-700'} ${getTutoClass('DETAIL_COL_' + cIdx, activePileIdx)}`}>
+
+                                              {col.map((blockId, bIdx) => {
+                                                  const isTopBlock = bIdx === col.length - 1;
+                                                  let isAccessible = false;
+                                                  if (isTopBlock && canInteract) {
+                                                      if (isT_Here) isAccessible = true; 
+                                                      if (isS_Here && cIdx === firstAvailCol) isAccessible = true;
+                                                  }
+
+                                                  return (
+                                                      <div key={bIdx} className="h-[31%] w-auto max-h-[60px] aspect-square mb-1 shrink-0 pointer-events-none relative">
+                                                            <BlockTile blockId={blockId} isSelected={isTopBlock && selected?.type === 'block' && selected.pile === activePileIdx && selected.col === cIdx} isAccessible={isAccessible} status="normal" t={t} />
+                                                      </div>
+                                                  );
+                                              })}
+                                              {/* Helper Visuel Shift Transtainer */}
+                                              {selected?.type === 'block' && selected.machine === 'T' && selected.pile === activePileIdx && col.length < 3 && (
+                                                  <div className={`h-[31%] w-auto max-h-[60px] aspect-square shrink-0 border border-dashed border-yellow-400/50 rounded mt-1 flex items-center justify-center bg-yellow-400/10 ${getTutoClass('DETAIL_SHIFT_' + cIdx, activePileIdx)}`}>
+                                                      <span className="text-[clamp(10px,2vh,16px)] text-yellow-200 pointer-events-none">⬇️</span>
+                                                  </div>
+                                              )}
+                                          </div>
+                                      )
+                                  })}
+                              </div>
                           </div>
-                          <div className="text-[clamp(8px,1.5vh,12px)] text-slate-500 uppercase tracking-widest mb-4 flex-none">{t('back_p')}</div>
+                          
+                          <div className="text-[clamp(8px,1.5vh,12px)] text-slate-500 uppercase tracking-widest mb-4 flex-none ml-2">{t('back_p')}</div>
                       </div>
                   </div>
 
                   {/* BULLE TUTORIEL */}
                   {tutorialState && tutorialState.active && currentStepData && (
                     tutorialState.minimized ? (
-                      <button onClick={() => setTutorialState(prev => ({...prev, minimized: false}))} className="absolute top-24 right-4 bg-emerald-600 border-2 border-white text-white px-4 py-2 rounded-full font-bold shadow-lg z-[100] animate-pulse">
+                      <button onClick={() => setTutorialState(prev => ({...prev, minimized: false}))} className="absolute top-24 right-4 bg-emerald-600 hover:bg-emerald-500 transition-colors border-2 border-white text-white px-4 py-2 rounded-full font-bold shadow-lg z-[100] animate-pulse">
                           [+] {t('show_tuto')} ({tutorialState.step})
                       </button>
                     ) : currentStepData.type === 'ai_turn' || currentStepData.type === 'info' ? (
@@ -1345,12 +1677,12 @@
                     ) : (
                       <div className="absolute top-[18vh] left-1/2 transform -translate-x-1/2 bg-slate-900 border-2 border-emerald-400 p-4 rounded-xl shadow-[0_0_30px_rgba(16,185,129,0.8)] z-[100] w-11/12 max-w-lg text-center flex flex-col items-center">
                           <div className="flex justify-between items-center w-full mb-2 border-b border-slate-700 pb-1">
-                              <h3 className="text-emerald-300 font-black text-xs tracking-widest uppercase">Étape {tutorialState.step} / {getTutorialSteps(t).length - 1}</h3>
-                              <button onClick={() => setTutorialState(prev => ({...prev, minimized: true}))} className="text-slate-400 hover:text-white font-bold px-2 py-1 bg-slate-800 rounded text-xs border border-slate-600">[-] {t('hide')}</button>
+                              <h3 className="text-emerald-300 font-black text-xs tracking-widest uppercase">Étape {tutorialState.step} / {getTutorialSteps(t, tutorialState.mode).length - 1}</h3>
+                              <button onClick={() => setTutorialState(prev => ({...prev, minimized: true}))} className="text-slate-400 hover:text-white font-bold px-2 py-1 bg-slate-800 hover:bg-slate-700 transition-colors rounded text-xs border border-slate-600">[-] {t('hide')}</button>
                           </div>
                           <p className="text-white text-sm md:text-base font-bold leading-snug mb-3">{currentStepData.text}</p>
-                          <button onClick={resetTutorialSelection} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-4 py-1.5 rounded text-xs font-bold transition shadow-md flex items-center justify-center gap-2 mx-auto">
-                              <span>↻</span> {t('restart_step')}
+                          <button onClick={previousTutorialStep} disabled={tutorialState.step === 0} className="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 px-4 py-1.5 rounded text-xs font-bold transition shadow-md flex items-center justify-center gap-2 mx-auto disabled:opacity-50 disabled:cursor-not-allowed">
+                              <span>⏪</span> {t('prev_step')}
                           </button>
                       </div>
                     )
@@ -1364,7 +1696,7 @@
                   <div className="fixed inset-0 bg-black/95 z-[130] flex items-center justify-center p-4">
                       <div className="bg-slate-900 border-2 border-orange-500 rounded-xl p-8 max-w-md w-full text-center shadow-[0_0_50px_rgba(249,115,22,0.4)]">
                           <h2 className="text-3xl font-black text-orange-500 mb-2 uppercase">TERMINÉ !</h2>
-                          <p className="text-white text-lg mb-6">Vous avez utilisé <strong className="text-yellow-400 text-2xl">{G.pgUsed} PG</strong>.</p>
+                          <p className="text-white text-lg mb-6">Vous avez utilisé <strong className="text-yellow-400 text-2xl">{G.pgUsed} Moves</strong>.</p>
                           <p className="text-emerald-400 font-bold mb-4 animate-pulse">NOUVEAU RECORD TOP 10 !</p>
                           <input 
                               type="text" 
@@ -1377,11 +1709,11 @@
                           <button 
                               onClick={submitSoloScore} 
                               disabled={!playerNameInput.trim()}
-                              className={`w-full font-bold py-3 rounded text-lg ${playerNameInput.trim() ? 'bg-orange-600 hover:bg-orange-500 text-white' : 'bg-slate-700 text-slate-500'}`}
+                              className={`w-full font-bold py-3 rounded text-lg transition-colors ${playerNameInput.trim() ? 'bg-orange-600 hover:bg-orange-500 text-white' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                           >
                               ENREGISTRER
                           </button>
-                          <button onClick={() => setQualifiesForLeaderboard(false)} className="w-full mt-4 text-slate-400 underline text-sm">Passer (Ne pas sauvegarder)</button>
+                          <button onClick={() => setQualifiesForLeaderboard(false)} className="w-full mt-4 text-slate-400 hover:text-white underline text-sm transition-colors">Passer (Ne pas sauvegarder)</button>
                       </div>
                   </div>
               )}
@@ -1390,14 +1722,14 @@
               {showRules && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4">
                   <div className="bg-slate-900 border-2 border-slate-700 rounded-xl max-w-2xl w-full max-h-[90dvh] overflow-y-auto p-6 shadow-2xl relative text-[clamp(12px,1.8vh,16px)] text-slate-300">
-                    <button onClick={() => setShowRules(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-sm">{t('close')}</button>
+                    <button onClick={() => setShowRules(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-sm transition-colors">{t('close')}</button>
                     <h2 className="text-2xl font-bold text-blue-400 mb-4 border-b border-slate-700 pb-2">📖 RÈGLES DE NAVIGATION (MULTI)</h2>
                     <ul className="space-y-4 mb-4">
                         <li><strong className="text-yellow-400">FLOTTE (Haut) :</strong> Sélectionnez votre machine (S ou T).</li>
                         <li><strong className="text-emerald-400">NAVIGATEUR (Milieu) :</strong> Cliquez sur une pile pour y déplacer la machine sélectionnée.</li>
                         <li><strong className="text-blue-400">VUE DÉTAILLÉE (Bas) :</strong> Cliquez sur les conteneurs entourés de <span className="text-cyan-400 font-bold">cyan</span> pour les extraire.</li>
                     </ul>
-                    <p className="mb-4 bg-slate-800 p-3 rounded"><strong className="text-white">COÛTS :</strong> Vous avez 4 PG par tour. Bouger coûte 1 PG. Extraire et Poser coûte 1 PG.</p>
+                    <p className="mb-4 bg-slate-800 p-3 rounded"><strong className="text-white">COÛTS :</strong> Vous avez 4 Moves par tour. Bouger coûte 1 Move. Extraire et Poser coûte 1 Move.</p>
                     <p className="text-red-400 font-bold border-l-4 border-red-500 pl-3">ZONE DE SÉCURITÉ DU TRANSTAINER : La pile où se trouve le T et ses 2 voisines sont interdites aux Stackers (Expulsion en Spello !)</p>
                   </div>
                 </div>
@@ -1407,67 +1739,91 @@
               {showSoloRules && (
                 <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4">
                   <div className="bg-slate-900 border-2 border-orange-500 rounded-xl max-w-2xl w-full max-h-[90dvh] overflow-y-auto p-6 shadow-2xl relative text-[clamp(12px,1.8vh,16px)] text-slate-300">
-                    <button onClick={() => setShowSoloRules(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-sm">{t('close')}</button>
+                    <button onClick={() => setShowSoloRules(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-sm transition-colors">{t('close')}</button>
                     <h2 className="text-2xl font-bold text-orange-400 mb-4 border-b border-orange-800 pb-2">📦 LE TEST À BRETELLES</h2>
                     <p className="mb-4 text-white">Ce mode est un puzzle d'optimisation pure. Il n'y a plus de tours ni d'adversaires.</p>
                     <ul className="space-y-4 mb-4 list-disc pl-5">
-                        <li><strong className="text-orange-400">Objectif :</strong> Terminer les 3 Decks en utilisant le <strong>moins de PG possible</strong>.</li>
+                        <li><strong className="text-orange-400">Objectif :</strong> Terminer les 3 Decks en utilisant le <strong>moins de Moves possible</strong>.</li>
                         <li><strong className="text-emerald-400">Contrôle Total :</strong> Vous pilotez S1 (Bleu), S2 (Rouge) ET le Transtainer (Jaune).</li>
                         <li><strong className="text-blue-400">L'Équité :</strong> Chaque "Niveau" génère toujours exactement la même disposition de départ pour tous les joueurs au monde.</li>
-                        <li><strong className="text-yellow-400">Le Spello-Trick :</strong> Utilisez le Transtainer ou un Stacker pour écraser votre autre Stacker et l'envoyer en Spello. Sa prochaine sortie coûte 0 PG !</li>
+                        <li><strong className="text-yellow-400">Le Spello-Trick :</strong> Utilisez le Transtainer pour écraser l'un de vos Stackers et l'envoyer en Spello. Sa prochaine sortie coûte 0 Move !</li>
                     </ul>
                   </div>
                 </div>
               )}
 
-              {/* DEVLOG MODAL */}
+              {/* DEVLOG MODAL (REFONTE GLOBALE) */}
               {showDevlog && (
                   <div className="fixed inset-0 bg-black/90 z-[110] flex items-center justify-center p-4">
                     <div className="bg-slate-900 border-2 border-slate-700 rounded-xl max-w-2xl w-full max-h-[90dvh] overflow-y-auto p-6 shadow-2xl relative text-[clamp(12px,1.8vh,16px)] text-slate-300 text-left">
-                      <button onClick={() => setShowDevlog(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-sm">{t('close')}</button>
-                      <h2 className="text-2xl font-bold text-emerald-400 mb-6 border-b border-slate-700 pb-2 font-sans tracking-widest uppercase">{t('devlog_title')}</h2>
+                      <button onClick={() => setShowDevlog(false)} className="absolute top-4 right-4 bg-red-700 hover:bg-red-600 text-white font-bold py-1.5 px-3 rounded text-sm transition-colors">{t('close')}</button>
+                      <h2 className="text-2xl font-bold text-amber-400 mb-6 border-b border-slate-700 pb-2 font-sans tracking-widest uppercase">HISTORIQUE DU PROJET</h2>
+                      
                       <div className="space-y-6">
                           <div>
-                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-emerald-600 text-white px-2 py-0.5 rounded text-xs">V2.31</span> Optimisation & Ergonomie</h3>
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-yellow-500 text-black px-2 py-0.5 rounded text-xs font-black">V3.0</span> Release Candidate (Le Drop)</h3>
                               <p className="text-xs text-slate-400 mt-1">Mars 2026</p>
                               <ul className="list-disc pl-5 mt-1 text-sm space-y-1 text-slate-400">
-                                  <li>Renommage de la campagne solo en "Le Test à Bretelles".</li>
-                                  <li>Clarification visuelle des règles spécifiques à chaque niveau de difficulté dans le menu.</li>
+                                  <li>Finalisation de la direction artistique et des proportions de la machinerie lourde.</li>
+                                  <li>Le portique Transtainer et les Reach Stackers partagent un ADN visuel industriel parfait (pinces unifiées, bogies massifs).</li>
+                                  <li>Stabilité mécanique et algorithmique validée. Le prototype Web est scellé et prêt pour la migration vers un environnement de développement professionnel.</li>
                               </ul>
                           </div>
+                          
                           <div>
-                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">V2.25</span> Release Candidate</h3>
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-emerald-600 text-white px-2 py-0.5 rounded text-xs">V2.90+</span> L'Âge Industriel (Direction Artistique)</h3>
                               <p className="text-xs text-slate-400 mt-1">Mars 2026</p>
                               <ul className="list-disc pl-5 mt-1 text-sm space-y-1 text-slate-400">
-                                  <li>Refonte totale des ponts (Decks) : suppression des structures instables.</li>
-                                  <li>Filtre dynamique du Leaderboard par difficulté (25 niveaux).</li>
-                                  <li>Historique d'annulation (Undo) étendu à 50 tours.</li>
-                                  <li>Ajout du formulaire de Feedback direct et des Mentions légales.</li>
+                                  <li>Refonte complète du moteur de rendu graphique (SVG) pour les machines (Transtainer & Stackers).</li>
+                                  <li>Création d'une identité visuelle "machinerie lourde" avec portique monolithique, bogies réalistes et animations ultra-rapides (200ms).</li>
                               </ul>
                           </div>
+
                           <div>
-                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">V2.0</span> Le Port 3D</h3>
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">V2.80</span> Le Moteur Mathématique</h3>
+                              <p className="text-xs text-slate-400 mt-1">Mars 2026</p>
+                              <ul className="list-disc pl-5 mt-1 text-sm space-y-1 text-slate-400">
+                                  <li>Mise au point de l'algorithme de ciblage proportionnel (`calc`) garantissant l'alignement au pixel près des pinces des grues avec les conteneurs, sur 100% des tailles d'écrans.</li>
+                              </ul>
+                          </div>
+
+                          <div>
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-purple-600 text-white px-2 py-0.5 rounded text-xs">V2.50</span> L'Édition "Test à Bretelles"</h3>
                               <p className="text-xs text-slate-400 mt-1">Février 2026</p>
                               <ul className="list-disc pl-5 mt-1 text-sm space-y-1 text-slate-400">
-                                  <li>Introduction de la machinerie lourde (Transtainer & Stackers).</li>
-                                  <li>Ajout de la Zone Spello et de la mécanique d'expulsion tactique.</li>
-                                  <li>Mise en place de l'Aura de sécurité.</li>
+                                  <li>Implémentation du mode Campagne Solo avec un générateur de niveaux procéduraux (75 Niveaux).</li>
+                                  <li>Intégration d'un système de Leaderboard mondial via Firebase pour créer une compétition asynchrone forte.</li>
                               </ul>
                           </div>
-                          <div className="border-t border-slate-700 pt-4 mt-4">
-                              <p className="text-sm text-yellow-400 font-bold">⏱️ Temps de développement cumulé : ~155 heures</p>
-                              <p className="text-xs text-slate-400 mt-1 italic">Conception, Game Design, Algorithmique, UI/UX, équilibrage et playtests intensifs.</p>
+
+                          <div>
+                              <h3 className="text-lg font-bold text-white flex items-center gap-2"><span className="bg-slate-600 text-white px-2 py-0.5 rounded text-xs">V2.00</span> Le Saut Quantique (Physique & Mécanique)</h3>
+                              <p className="text-xs text-slate-400 mt-1">Février 2026</p>
+                              <ul className="list-disc pl-5 mt-1 text-sm space-y-1 text-slate-400">
+                                  <li>Passage d'un jeu de gestion de cartes 2D à un jeu d'optimisation spatiale et de blocage tactique (La Cour en escalier).</li>
+                                  <li>Création de la mécanique de l'Aura de sécurité, des expulsions en Zone Spello, et du "Spello-Trick".</li>
+                              </ul>
+                          </div>
+                          
+                          {/* LE COMPTEUR D'HEURES ESTIMÉ */}
+                          <div className="border-t border-slate-700 pt-5 mt-6 bg-slate-800/50 p-4 rounded-lg shadow-inner">
+                              <p className="text-[16px] text-amber-400 font-black flex items-center gap-2">
+                                  <span>⏱️</span> Temps de développement cumulé : ~165 heures
+                              </p>
+                              <p className="text-sm text-slate-400 mt-2 italic leading-relaxed">
+                                  Ce projet représente une synergie complexe entre la Conception de Jeux (Game Design), l'Algorithmique de Rendu, l'Expérience Utilisateur (UI/UX), la Direction Artistique et des phases intensives d'équilibrage et de playtest.
+                              </p>
                           </div>
                       </div>
                     </div>
                   </div>
               )}
 
-              {/* NOUVEAU : MODALE FEEDBACK PRO */}
+              {/* MODALE FEEDBACK PRO */}
               {showFeedback && (
                   <div className="fixed inset-0 bg-black/95 z-[120] flex items-center justify-center p-4">
                       <div className="bg-slate-900 border-2 border-cyan-500 rounded-xl p-6 w-full max-w-md shadow-[0_0_30px_rgba(6,182,212,0.3)] relative">
-                          <button onClick={() => {setShowFeedback(false); setFeedbackStatus('');}} className="absolute top-4 right-4 text-slate-400 hover:text-white font-bold text-xl leading-none">&times;</button>
+                          <button onClick={() => {setShowFeedback(false); setFeedbackStatus('');}} className="absolute top-4 right-4 text-slate-400 hover:text-white font-bold text-xl leading-none transition-colors">&times;</button>
                           
                           <h2 className="text-2xl font-bold text-cyan-400 mb-2 text-center uppercase tracking-widest">{t('feedback_title')}</h2>
                           <p className="text-slate-300 text-sm mb-4 text-center">{t('feedback_desc')}</p>
@@ -1488,7 +1844,7 @@
                               <button 
                                   onClick={handleFeedbackSubmit} 
                                   disabled={!feedbackText.trim() || feedbackStatus === 'sending'}
-                                  className={`w-full font-bold py-3 rounded text-sm transition ${!feedbackText.trim() ? 'bg-slate-800 text-slate-500 border border-slate-700' : 'bg-cyan-700 hover:bg-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]'}`}
+                                  className={`w-full font-bold py-3 rounded text-sm transition-colors ${!feedbackText.trim() ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed' : 'bg-cyan-700 hover:bg-cyan-600 text-white shadow-[0_0_15px_rgba(6,182,212,0.4)]'}`}
                               >
                                   {feedbackStatus === 'sending' ? t('feedback_sending') : t('feedback_send')}
                               </button>
@@ -1507,8 +1863,8 @@
                     <div className="bg-slate-900 border-2 border-slate-700 rounded-xl p-6 text-center text-slate-300 shadow-2xl">
                         <h2 className="text-xl font-bold text-emerald-400 mb-4">RESTART</h2>
                         <div className="flex justify-center gap-6 mt-4">
-                            <button onClick={()=>setShowNewGameConfirm(false)} className="px-6 py-2 bg-slate-700 rounded font-bold">{t('cancel')}</button>
-                            <button onClick={()=>{handleRestartGame();setShowNewGameConfirm(false);}} className="px-6 py-2 bg-emerald-700 text-white rounded font-bold">{t('confirm')}</button>
+                            <button onClick={()=>setShowNewGameConfirm(false)} className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded font-bold transition-colors">{t('cancel')}</button>
+                            <button onClick={()=>{handleRestartGame();setShowNewGameConfirm(false);}} className="px-6 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded font-bold transition-colors">{t('confirm')}</button>
                         </div>
                     </div>
                   </div>
@@ -1519,8 +1875,8 @@
                     <div className="bg-slate-900 border-2 border-slate-700 rounded-xl p-6 text-center text-slate-300 shadow-2xl">
                         <h2 className="text-xl font-bold text-blue-400 mb-4">{t('back').toUpperCase()}</h2>
                         <div className="flex justify-center gap-6 mt-4">
-                            <button onClick={()=>setShowMenuConfirm(false)} className="px-6 py-2 bg-slate-700 rounded font-bold">{t('cancel')}</button>
-                            <button onClick={() => { setShowMenuConfirm(false); returnToMenu(); }} className="px-6 py-2 bg-blue-700 text-white rounded font-bold">{t('quit')}</button>
+                            <button onClick={()=>setShowMenuConfirm(false)} className="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded font-bold transition-colors">{t('cancel')}</button>
+                            <button onClick={() => { setShowMenuConfirm(false); returnToMenu(); }} className="px-6 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded font-bold transition-colors">{t('quit')}</button>
                         </div>
                     </div>
                   </div>
